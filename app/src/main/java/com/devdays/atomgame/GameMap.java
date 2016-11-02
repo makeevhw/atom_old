@@ -7,15 +7,13 @@ import java.util.Random;
 
 
 public class GameMap {
-
-    protected final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
-    protected final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
-    public ArrayList<int[]> mSolutionAtomArray;
-    protected int mNumberOfAtoms;
-    protected int mWidth, mHeight, mCurrentLevel;
-    protected ArrayList<int[]> mMoveCollector; // arrlist of all moves like {x1, y1, x2, y2, color}
-    protected int[][] mCurrentLevelMap;
-    protected int mNumberofShoots;
+    final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
+    private final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
+    ArrayList<int[]> mSolutionAtomArray;
+    int mNumberOfAtoms;
+    ArrayList<int[]> mMoveCollector; // arrlist of all moves like {x1, y1, x2, y2, color}
+    int[][] mCurrentLevelMap;
+    int mNumberofShoots;
     private Random mRnd;
 
     public GameMap(int n, int m) {
@@ -23,7 +21,7 @@ public class GameMap {
         mMoveCollector = new ArrayList<int[]>();
         mSolutionAtomArray = new ArrayList<>();
 
-        mCurrentLevelMap = AddBoardersToLevel(generateMap(n - 2, m - 2)); // 2 fo borders
+        mCurrentLevelMap = addBoardersToLevel(generateMap(n - 2, m - 2)); // 2 fo borders
         initSolutionArrayAndAtomNumber();
         mNumberOfAtoms = getNumberOfAtoms();
     }
@@ -31,16 +29,15 @@ public class GameMap {
 
     private void initSolutionArrayAndAtomNumber() {
         mNumberOfAtoms = 0;
-        for (int i = 0; i < getHeight(); i++) {
-            for (int j = 0; j < getWidth(); j++) {
-                if (mCurrentLevelMap[i][j] == ATOM_CODE) {
-                    mSolutionAtomArray.add(new int[]{i + 1, j + 1}); // {x, y}//bad code, repair
+        for (int y = 0; y < getHeight(); y++) {
+            for (int x = 0; x < getWidth(); x++) {
+                if (mCurrentLevelMap[y][x] == ATOM_CODE) {
+                    mSolutionAtomArray.add(new int[]{x, y}); // {x, y}//bad code, repair
                     mNumberOfAtoms++;
                 }
             }
         }
     }
-
 
     //Sobir's method
     int[][] generateMap(int n, int m) {
@@ -50,18 +47,16 @@ public class GameMap {
                 int temp = mRnd.nextInt(9);
                 if (temp == 0) {
                     level0[i][j] = ATOM_CODE;
-                    mSolutionAtomArray.add(new int[]{j + 1, i + 1}); // {x, y}//bad code, repair
                 }
             }
         }
 
         //todo change for "hard" or "soft" level mode
-        mNumberofShoots = 100 * (n + m) / 5; // hardcode
+        mNumberofShoots = 100 * (n + m) / 5; // hardcode, hackaton INFINITY_VAL implementation, big enough
         return level0;
     }
 
-
-    private int[][] AddBoardersToLevel(int[][] level) {
+    private int[][] addBoardersToLevel(int[][] level) {
         int[][] levelWithBoarders = new int[level.length + 2][level[0].length + 2];
 
         // содержимое и боковые
@@ -81,24 +76,10 @@ public class GameMap {
         return mCurrentLevelMap[0].length;
     }
 
-    public void AddMoveLine(int x1, int y1, int x2, int y2, int color) {
+    public void addMoveLine(int x1, int y1, int x2, int y2, int color) {
         int[] arr = {x1, y1, x2, y2, color};
         mMoveCollector.add(arr);
     }
-
-    //we need this?
-    private int[][] cleanLevel(int[][] level) {
-        for (int i = 0; i < level.length; i++) {
-            level[i][0] = 0;
-            level[i][level[0].length - 1] = 0;
-        }
-        for (int j = 0; j < level[0].length; j++) {
-            level[0][j] = 0;
-            level[level.length - 1][j] = 0;
-        }
-        return level;
-    }
-
 
     public int getNumberOfAtoms() {
         int number = 0;
@@ -126,7 +107,7 @@ public class GameMap {
                 (cellY == getHeight() - 1 && direction == DIRECTION_DOWN);
     }
 
-    protected boolean isMoveAble(int mTouchX, int mTouchY, int laserDirection, int pixForBlockX, int pixForBlockY) {
+    protected boolean isMoveAble(int mTouchX, int mTouchY, int pixForBlockX, int pixForBlockY) {
         int cellY, cellX;
         cellX = Math.min(mTouchX / (pixForBlockX /* + 1 */), getWidth() - 1); // бесподобный костыль
         cellY = Math.min(mTouchY / (pixForBlockY /* + 1 */), getHeight() - 1);
@@ -268,7 +249,7 @@ public class GameMap {
                                 int direction, int currentColor, int pixForBlockX, int pixForBlockY) {
         switch (direction) { // вход лазера
             case DIRECTION_RIGHT:
-                AddMoveLine( // x-s left to right
+                addMoveLine( // x-s left to right
                         cellX * pixForBlockX,
                         cellY * pixForBlockY + pixelOffsetY,
                         cellX * pixForBlockX + pixForBlockX,
@@ -276,7 +257,7 @@ public class GameMap {
                         currentColor);
                 break;
             case DIRECTION_LEFT:
-                AddMoveLine(
+                addMoveLine(
                         cellX * pixForBlockX + pixForBlockX,
                         cellY * pixForBlockY + pixelOffsetY,
                         cellX * pixForBlockX,
@@ -284,7 +265,7 @@ public class GameMap {
                         currentColor);
                 break;
             case DIRECTION_UP:
-                AddMoveLine(
+                addMoveLine(
                         cellX * pixForBlockX + pixelOffsetX,
                         cellY * pixForBlockY + pixForBlockY,
                         cellX * pixForBlockX + pixelOffsetX,
@@ -292,7 +273,7 @@ public class GameMap {
                         currentColor);
                 break;
             case DIRECTION_DOWN:
-                AddMoveLine(
+                addMoveLine(
                         cellX * pixForBlockX + pixelOffsetX,
                         cellY * pixForBlockY,
                         cellX * pixForBlockX + pixelOffsetX,

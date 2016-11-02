@@ -19,29 +19,20 @@ import java.util.ArrayList;
 
 public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback {
 
-    protected final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
-    protected final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
+    protected final int ATOM_CODE = 1; //, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
     private final float scale = getContext().getResources().getDisplayMetrics().density;
     protected int pixForBlockX, pixForBlockY;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
-    protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY, x11, y11, x12, y12, x21, y21, x22, y22 }
-    private int mCurrentLevelNumber;
+    protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY }
+    private int mCurrentLevelNumber = 0;
     private GameMap mGameMap;
     private Paint mPaint;
-    private float[] mLineHorizontalData, mLineVerticalData, mLinesCheckedData;
+    private float[] mLineHorizontalData, mLineVerticalData;
     private boolean mIsPressed = false;
-    private int mTouchX, mTouchY;
     private Bitmap bitmapAtomBluePic = null;
-    private boolean isThereAreNoShoots;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
-    private ArrayList<int[]> mSolutionAtomArray;
-
-
-    // todo todo todo вместо перерисовки заменить, где можно, дорисовкой
-    // todo добавить кнопку закгрузки перехода к новому уровню
-    // todo и добавить новые уровни
-    // todo
+    private int cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 150;
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
@@ -52,7 +43,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
 
         //this.invalidate();
-        int cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 100;
+
         //int n = (getContext().getResources().getDisplayMetrics().heightPixels - 200) / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD;
         int m = getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD;
 
@@ -75,6 +66,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
 
+    //////many draw methods
     void drawChoses(Canvas canvas) {
         // рисуем кресты/atoms
 
@@ -239,6 +231,76 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         }
     }
 
+    private void drawArrow(Canvas canvas, float x0, float y0, float x1, float y1, int arrowColor) {
+
+        mPaint.setStyle(Paint.Style.FILL);
+        mPaint.setColor(arrowColor);
+
+        float deltaX = x1 - x0;
+        float deltaY = y1 - y0;
+        float frac = (float) 0.15;
+        /*The variable
+            frac : 0 < frac < 1
+                determines the size of the arrow head.*/
+
+
+        float point_x_1 = x0 + (1 - frac) * deltaX + frac * deltaY;
+        float point_y_1 = y0 + (1 - frac) * deltaY - frac * deltaX;
+
+        float point_x_2 = x1;
+        float point_y_2 = y1;
+
+        float point_x_3 = x0 + (1 - frac) * deltaX - frac * deltaY;
+        float point_y_3 = y0 + (1 - frac) * deltaY + frac * deltaX;
+
+        Path path = new Path();
+        path.setFillType(Path.FillType.EVEN_ODD);
+
+        path.moveTo(point_x_1, point_y_1);
+        path.lineTo(point_x_2, point_y_2);
+        path.lineTo(point_x_3, point_y_3);
+        path.lineTo(point_x_1, point_y_1);
+        path.lineTo(point_x_1, point_y_1);
+        path.close();
+
+        canvas.drawPath(path, mPaint);
+    }
+
+    private void drawSolution(Canvas canvas) {
+        // рисуем оригинальные кресты
+
+        //Paint p = new Paint();
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setColor(Color.RED);
+        mPaint.setStrokeWidth(8.0f);
+
+
+        //todo redo for drawlines, faster
+        for (int i = 0; i < mGameMap.mSolutionAtomArray.size(); i++) {
+
+            float radius = Math.min(pixForBlockX / 2, pixForBlockY / 2);
+            float x = pixForBlockX * mGameMap.mSolutionAtomArray.get(i)[0] + pixForBlockX / 2;
+            float y = pixForBlockY * mGameMap.mSolutionAtomArray.get(i)[1] + pixForBlockY / 2;
+
+
+            canvas.drawCircle(
+                    x, // x
+                    y, // y
+                    radius, // radius
+                    mPaint);
+        }
+    }
+
+    void drawCellPicture(Canvas canvas, Bitmap bitmap, float left, float top) {
+        canvas.drawBitmap(bitmap, left, top, null);
+    }
+
+    private void performDraw() {
+        Canvas canvas = getHolder().lockCanvas();
+        draw(canvas);
+        getHolder().unlockCanvasAndPost(canvas);
+    }
+
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
@@ -283,15 +345,6 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceDestroyed(SurfaceHolder holder) {
     }
 
-    private void numberShootsRefresh() {
-        if (mGameMap.mNumberofShoots < 1)
-            textViewShoots.setTextColor(Color.RED);
-
-        textViewShoots.setText(getResources().getString(R.string.number_of_shoots)
-                + " " + mGameMap.mNumberofShoots + " ");
-        textViewShoots.invalidate(); // refresh
-    }
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
@@ -301,79 +354,84 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
             case MotionEvent.ACTION_MOVE:
                 return mIsPressed;
             case MotionEvent.ACTION_UP: /// todo fix bug with moving and Xses
-                mTouchX = (int) event.getX();
-                mTouchY = (int) event.getY();
-                mIsPressed = false;
-                if (mTouchX < mLineVerticalData[4] && mTouchY > mLineHorizontalData[5]
-                        && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) { // LEFT
-                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_RIGHT, pixForBlockX, pixForBlockY)) {
-                        mGameMap.MakeMove(
-                                mTouchX,
-                                mTouchY,
-                                mGameMap.DIRECTION_RIGHT,
-                                pixForBlockX,
-                                pixForBlockY);
-                        numberShootsRefresh();
-                        performDraw();
-                        return true;
-                    } else
-                        return false;
-                } else if (mTouchX > mLineVerticalData[mLineVerticalData.length - 8] &&
-                        mTouchY > mLineHorizontalData[5] // RIGHT
-                        && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
-                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_LEFT, pixForBlockX, pixForBlockY)) {
-                        mGameMap.MakeMove(
-                                mTouchX,
-                                mTouchY,
-                                mGameMap.DIRECTION_LEFT,
-                                pixForBlockX,
-                                pixForBlockY);
-                        performDraw();
-                        return true;
-                    } else
-                        return false;
-                } else if (mTouchX > mLineVerticalData[4]
-                        && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // TOP
-                        && mTouchY < mLineHorizontalData[5]) {
-                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_DOWN, pixForBlockX, pixForBlockY)) {
-                        mGameMap.MakeMove(
-                                mTouchX,
-                                mTouchY,
-                                mGameMap.DIRECTION_DOWN,
-                                pixForBlockX,
-                                pixForBlockY);
-                        numberShootsRefresh();
-                        performDraw();
-                        return true;
-                    } else
-                        return false;
-                } else if (
-                        mTouchX > mLineVerticalData[4]
-                                && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // BOTTOM
-                                && mTouchY > mLineHorizontalData[mLineHorizontalData.length - 7]
-                        ) {
-                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_UP, pixForBlockX, pixForBlockY)) {
-                        mGameMap.MakeMove(
-                                mTouchX,
-                                mTouchY,
-                                mGameMap.DIRECTION_UP,
-                                pixForBlockX,
-                                pixForBlockY);
-                        numberShootsRefresh();
-                        performDraw();
-                        return true;
-                    } else
-                        return false;
-                } else if (mTouchX > mLineVerticalData[4] &&
-                        mTouchX < mLineVerticalData[mLineVerticalData.length - 8] &&  // FIELD
-                        mTouchY > mLineHorizontalData[5] &&
-                        mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
-                    markLikeAtom(mTouchX, mTouchY);
-                    performDraw(); // only if remove
-                } else
-                    return false;
+                int mTouchX = (int) event.getX();
+                int mTouchY = (int) event.getY();
+                mIsPressed = false; // remove this filed?
+                performLazerAttack(mTouchX, mTouchY);
         }
         return false;
+    }
+
+    private boolean performLazerAttack(int mTouchX, int mTouchY) {
+        if (mTouchX < mLineVerticalData[4] && mTouchY > mLineHorizontalData[5]
+                && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) { // LEFT
+            if (mGameMap.isMoveAble(mTouchX, mTouchY, pixForBlockX, pixForBlockY)) {
+                mGameMap.MakeMove(
+                        mTouchX,
+                        mTouchY,
+                        mGameMap.DIRECTION_RIGHT,
+                        pixForBlockX,
+                        pixForBlockY);
+                numberShootsRefresh();
+                performDraw();
+                return true;
+            } else
+                return false;
+        } else if (mTouchX > mLineVerticalData[mLineVerticalData.length - 8] &&
+                mTouchY > mLineHorizontalData[5] // RIGHT
+                && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
+            if (mGameMap.isMoveAble(mTouchX, mTouchY, pixForBlockX, pixForBlockY)) {
+                mGameMap.MakeMove(
+                        mTouchX,
+                        mTouchY,
+                        mGameMap.DIRECTION_LEFT,
+                        pixForBlockX,
+                        pixForBlockY);
+                performDraw();
+                return true;
+            } else
+                return false;
+        } else if (mTouchX > mLineVerticalData[4]
+                && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // TOP
+                && mTouchY < mLineHorizontalData[5]) {
+            if (mGameMap.isMoveAble(mTouchX, mTouchY, pixForBlockX, pixForBlockY)) {
+                mGameMap.MakeMove(
+                        mTouchX,
+                        mTouchY,
+                        mGameMap.DIRECTION_DOWN,
+                        pixForBlockX,
+                        pixForBlockY);
+                numberShootsRefresh();
+                performDraw();
+                return true;
+            } else
+                return false;
+        } else if (
+                mTouchX > mLineVerticalData[4]
+                        && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // BOTTOM
+                        && mTouchY > mLineHorizontalData[mLineHorizontalData.length - 7]
+                ) {
+            if (mGameMap.isMoveAble(mTouchX, mTouchY, pixForBlockX, pixForBlockY)) {
+                mGameMap.MakeMove(
+                        mTouchX,
+                        mTouchY,
+                        mGameMap.DIRECTION_UP,
+                        pixForBlockX,
+                        pixForBlockY);
+                numberShootsRefresh();
+                performDraw();
+                return true;
+            } else
+                return false;
+        } else if (mTouchX > mLineVerticalData[4] &&
+                mTouchX < mLineVerticalData[mLineVerticalData.length - 8] &&  // FIELD
+                mTouchY > mLineHorizontalData[5] &&
+                mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
+            markLikeAtom(mTouchX, mTouchY);
+            performDraw(); // only if remove
+            return true;
+        } else
+            return false;
     }
 
     private void markLikeAtom(int touchX, int touchY) { // mark cell chosed, draw atom here
@@ -411,47 +469,13 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         }
     }
 
+    private void numberShootsRefresh() {
+        if (mGameMap.mNumberofShoots < 1)
+            textViewShoots.setTextColor(Color.RED);
 
-    private void performDraw() {
-        Canvas canvas = getHolder().lockCanvas();
-        draw(canvas);
-        getHolder().unlockCanvasAndPost(canvas);
-    }
-
-    //
-    private void drawArrow(Canvas canvas, float x0, float y0, float x1, float y1, int arrowColor) {
-
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(arrowColor);
-
-        float deltaX = x1 - x0;
-        float deltaY = y1 - y0;
-        float frac = (float) 0.15;
-        /*The variable
-            frac : 0 < frac < 1
-                determines the size of the arrow head.*/
-
-
-        float point_x_1 = x0 + (1 - frac) * deltaX + frac * deltaY;
-        float point_y_1 = y0 + (1 - frac) * deltaY - frac * deltaX;
-
-        float point_x_2 = x1;
-        float point_y_2 = y1;
-
-        float point_x_3 = x0 + (1 - frac) * deltaX - frac * deltaY;
-        float point_y_3 = y0 + (1 - frac) * deltaY + frac * deltaX;
-
-        Path path = new Path();
-        path.setFillType(Path.FillType.EVEN_ODD);
-
-        path.moveTo(point_x_1, point_y_1);
-        path.lineTo(point_x_2, point_y_2);
-        path.lineTo(point_x_3, point_y_3);
-        path.lineTo(point_x_1, point_y_1);
-        path.lineTo(point_x_1, point_y_1);
-        path.close();
-
-        canvas.drawPath(path, mPaint);
+        textViewShoots.setText(getResources().getString(R.string.number_of_shoots)
+                + " " + mGameMap.mNumberofShoots + " ");
+        textViewShoots.invalidate(); // refresh
     }
 
     //print text, here
@@ -469,7 +493,6 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         textViewHeader.setText(getResources().getString(R.string.level) + " " + mCurrentLevelNumber);
     }
 
-    //performDraw something, just read, stay here
     public void checkResults() {
         if (atomHaveChosed < mGameMap.mNumberOfAtoms) {
             textViewRequest.setTextColor(Color.RED);
@@ -499,32 +522,5 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
     }
 
-    private void drawSolution(Canvas canvas) {
-        // рисуем оригинальные кресты
 
-        //Paint p = new Paint();
-        mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setColor(Color.RED);
-        mPaint.setStrokeWidth(8.0f);
-
-
-        //todo redo for drawlines, faster
-        for (int i = 0; i < mGameMap.mSolutionAtomArray.size(); i++) {
-
-            float radius = Math.min(pixForBlockX / 2, pixForBlockY / 2);
-            float x = pixForBlockX * mGameMap.mSolutionAtomArray.get(i)[0] + pixForBlockX / 2;
-            float y = pixForBlockY * mGameMap.mSolutionAtomArray.get(i)[1] + pixForBlockY / 2;
-
-
-            canvas.drawCircle(
-                    x, // x
-                    y, // y
-                    radius, // radius
-                    mPaint);
-        }
-    }
-
-    void drawCellPicture(Canvas canvas, Bitmap bitmap, float left, float top) {
-        canvas.drawBitmap(bitmap, left, top, null);
-    }
 }
