@@ -21,8 +21,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
     protected final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
     protected final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
+    private final float scale = getContext().getResources().getDisplayMetrics().density;
     protected int pixForBlockX, pixForBlockY;
-    protected int mNumberOfAtoms;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
     protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY, x11, y11, x12, y12, x21, y21, x22, y22 }
     private int mCurrentLevelNumber;
@@ -32,10 +32,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private boolean mIsPressed = false;
     private int mTouchX, mTouchY;
     private Bitmap bitmapAtomBluePic = null;
-
     private boolean isThereAreNoShoots;
-    private int mCurrentAtom = 0;
-    private final float scale = getContext().getResources().getDisplayMetrics().density;
+    private int atomHaveChosed = 0;
     private boolean mLosed = false;
     private ArrayList<int[]> mSolutionAtomArray;
 
@@ -70,8 +68,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
 
         mChosenAtomsArray = new ArrayList<int[]>();
-        mNumberOfAtoms = mGameMap.getNumberOfAtoms();
-        //mLinesCheckedData = new float[mNumberOfAtoms * 8]; // todo WHY????
+
+        //mLinesCheckedData = new float[mGameMap.mGameMap.mNumberOfAtoms * 8]; // todo WHY????
 
 
     }
@@ -127,28 +125,6 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                     mChosenAtomsArray.get(i)[1] * pixForBlockY + pixForBlockY / 20
             );
         }
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-
-        pixForBlockX = canvas.getWidth() / (mGameMap.getWidth());
-        pixForBlockY = canvas.getHeight() / (mGameMap.getHeight());
-
-        canvas.drawColor(Color.WHITE);
-
-        drawGrid(canvas);
-
-        drawLazers(canvas);
-
-
-        drawChoses(canvas);
-
-        if (mLosed)
-            drawSolution(canvas);
-
-        drawBorders(canvas);
     }
 
     private void drawGrid(Canvas canvas) {
@@ -264,6 +240,28 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
     @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+
+        pixForBlockX = canvas.getWidth() / (mGameMap.getWidth());
+        pixForBlockY = canvas.getHeight() / (mGameMap.getHeight());
+
+        canvas.drawColor(Color.WHITE);
+
+        drawGrid(canvas);
+
+        drawLazers(canvas);
+
+
+        drawChoses(canvas);
+
+        if (mLosed)
+            drawSolution(canvas);
+
+        drawBorders(canvas);
+    }
+
+    @Override
     public void surfaceCreated(SurfaceHolder holder) {
 
         pixForBlockX = getWidth() / (mGameMap.getWidth()); // fake
@@ -301,17 +299,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 mIsPressed = true;
                 return true;
             case MotionEvent.ACTION_MOVE:
-                if (mIsPressed)
-                    return true;
-                else
-                    return false;
+                return mIsPressed;
             case MotionEvent.ACTION_UP: /// todo fix bug with moving and Xses
                 mTouchX = (int) event.getX();
                 mTouchY = (int) event.getY();
                 mIsPressed = false;
                 if (mTouchX < mLineVerticalData[4] && mTouchY > mLineHorizontalData[5]
                         && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) { // LEFT
-                    if (isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_RIGHT)) {
+                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_RIGHT, pixForBlockX, pixForBlockY)) {
                         mGameMap.MakeMove(
                                 mTouchX,
                                 mTouchY,
@@ -326,7 +321,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 } else if (mTouchX > mLineVerticalData[mLineVerticalData.length - 8] &&
                         mTouchY > mLineHorizontalData[5] // RIGHT
                         && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
-                    if (isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_LEFT)) {
+                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_LEFT, pixForBlockX, pixForBlockY)) {
                         mGameMap.MakeMove(
                                 mTouchX,
                                 mTouchY,
@@ -340,7 +335,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 } else if (mTouchX > mLineVerticalData[4]
                         && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // TOP
                         && mTouchY < mLineHorizontalData[5]) {
-                    if (isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_DOWN)) {
+                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_DOWN, pixForBlockX, pixForBlockY)) {
                         mGameMap.MakeMove(
                                 mTouchX,
                                 mTouchY,
@@ -357,7 +352,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                                 && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // BOTTOM
                                 && mTouchY > mLineHorizontalData[mLineHorizontalData.length - 7]
                         ) {
-                    if (isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_UP)) {
+                    if (mGameMap.isMoveAble(mTouchX, mTouchY, mGameMap.DIRECTION_UP, pixForBlockX, pixForBlockY)) {
                         mGameMap.MakeMove(
                                 mTouchX,
                                 mTouchY,
@@ -373,15 +368,15 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mTouchX < mLineVerticalData[mLineVerticalData.length - 8] &&  // FIELD
                         mTouchY > mLineHorizontalData[5] &&
                         mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
-                    ChoseAtom(mTouchX, mTouchY);
-                    //performDraw(); // only if remove
+                    markLikeAtom(mTouchX, mTouchY);
+                    performDraw(); // only if remove
                 } else
                     return false;
         }
         return false;
     }
 
-    private void ChoseAtom(int touchX, int touchY) { // mark cell chosed, draw atom here
+    private void markLikeAtom(int touchX, int touchY) { // mark cell chosed, draw atom here
         int cellX = touchX / (pixForBlockX + 1); // начальные номера ячеек
         int cellY = touchY / (pixForBlockY + 1);
         int numberToDechoose = 0;
@@ -395,40 +390,25 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         }
 
         if (!isAlreadyMarked) { // CHOOSE
-            if (mCurrentAtom < mNumberOfAtoms) {
+            if (atomHaveChosed < mGameMap.mNumberOfAtoms) {
                 int[] arr = new int[2]; // добавляем номера ячеек в arraylist
                 arr[0] = cellX;
                 arr[1] = cellY;
 
                 mChosenAtomsArray.add(arr);
-                mCurrentAtom++;
+                atomHaveChosed++;
 
                 textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " +
-                        (mNumberOfAtoms - mCurrentAtom) + " ");
+                        (mGameMap.mNumberOfAtoms - atomHaveChosed) + " ");
                 textViewAtoms.invalidate();
             }
-        } else { // DECHOOSE
+        } else { // DECHOOSE update text
             mChosenAtomsArray.remove(numberToDechoose);
-            mCurrentAtom--;
+            atomHaveChosed--;
             textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " +
-                    (mNumberOfAtoms - mCurrentAtom) + " ");
+                    (mGameMap.mNumberOfAtoms - atomHaveChosed) + " ");
             textViewAtoms.invalidate();
         }
-    }
-
-    private boolean isMoveAble(int mTouchX, int mTouchY, int laserDirection) {
-        int cellY, cellX;
-        cellX = Math.min(mTouchX / (pixForBlockX /* + 1 */), mGameMap.getWidth() - 1); // бесподобный костыль
-        cellY = Math.min(mTouchY / (pixForBlockY /* + 1 */), mGameMap.getHeight() - 1);
-
-        if (
-                (mGameMap.mCurrentLevelMap[cellY][cellX] == FREE_SPACE ||
-                        mGameMap.mCurrentLevelMap[cellY][cellX] == MOVE_OUT) &&
-                        mGameMap.mNumberofShoots > 0
-                )
-            return true;
-        else
-            return false;
     }
 
 
@@ -452,14 +432,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 determines the size of the arrow head.*/
 
 
-        float point_x_1 = x0 + (float) ((1 - frac) * deltaX + frac * deltaY);
-        float point_y_1 = y0 + (float) ((1 - frac) * deltaY - frac * deltaX);
+        float point_x_1 = x0 + (1 - frac) * deltaX + frac * deltaY;
+        float point_y_1 = y0 + (1 - frac) * deltaY - frac * deltaX;
 
         float point_x_2 = x1;
         float point_y_2 = y1;
 
-        float point_x_3 = x0 + (float) ((1 - frac) * deltaX - frac * deltaY);
-        float point_y_3 = y0 + (float) ((1 - frac) * deltaY + frac * deltaX);
+        float point_x_3 = x0 + (1 - frac) * deltaX - frac * deltaY;
+        float point_y_3 = y0 + (1 - frac) * deltaY + frac * deltaX;
 
         Path path = new Path();
         path.setFillType(Path.FillType.EVEN_ODD);
@@ -480,7 +460,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         textViewShoots.setText(getResources().getString(R.string.number_of_shoots) + " " + mGameMap.mNumberofShoots + " ");
 
         textViewAtoms = (TextView) ((MainActivity) this.getContext()).findViewById(R.id.textView2);
-        textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " + mNumberOfAtoms + " ");
+        textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " + mGameMap.mNumberOfAtoms + " ");
 
         textViewRequest = (TextView) ((MainActivity) this.getContext()).findViewById(R.id.textViewRequest);
         textViewRequest.setText(" ");
@@ -490,10 +470,10 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
     //performDraw something, just read, stay here
-    public void CheckResult() {
-        if (mCurrentAtom < mNumberOfAtoms) {
+    public void checkResults() {
+        if (atomHaveChosed < mGameMap.mNumberOfAtoms) {
             textViewRequest.setTextColor(Color.RED);
-            textViewRequest.setText("Not all atoms have been choosen. " + (mNumberOfAtoms - mCurrentAtom) +
+            textViewRequest.setText("Not all atoms have been choosen. " + (mGameMap.mNumberOfAtoms - atomHaveChosed) +
                     " atoms left.");
         } else {
             boolean isCorrect = true;

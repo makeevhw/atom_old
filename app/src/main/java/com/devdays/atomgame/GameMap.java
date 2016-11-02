@@ -8,31 +8,42 @@ import java.util.Random;
 
 public class GameMap {
 
-    public final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
+    protected final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
     protected final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
+    public ArrayList<int[]> mSolutionAtomArray;
+    protected int mNumberOfAtoms;
     protected int mWidth, mHeight, mCurrentLevel;
-
     protected ArrayList<int[]> mMoveCollector; // arrlist of all moves like {x1, y1, x2, y2, color}
     protected int[][] mCurrentLevelMap;
     protected int mNumberofShoots;
     private Random mRnd;
-    public ArrayList<int[]> mSolutionAtomArray;
 
     public GameMap(int n, int m) {
         mRnd = new Random();
         mMoveCollector = new ArrayList<int[]>();
         mSolutionAtomArray = new ArrayList<>();
-        //mHeight = mMapCollector.get(mCurrentLevel).length;
-        //mWidth = mMapCollector.get(mCurrentLevel)[0].length;
-        //mHeight = m - 2; // redo later for map generating
-        //mWidth = n - 2; // 2 for boarders
-        mCurrentLevelMap = AddBoardersToLevel(generateMap(n - 2, m - 2));
 
+        mCurrentLevelMap = AddBoardersToLevel(generateMap(n - 2, m - 2)); // 2 fo borders
+        initSolutionArrayAndAtomNumber();
+        mNumberOfAtoms = getNumberOfAtoms();
     }
+
+
+    private void initSolutionArrayAndAtomNumber() {
+        mNumberOfAtoms = 0;
+        for (int i = 0; i < getHeight(); i++) {
+            for (int j = 0; j < getWidth(); j++) {
+                if (mCurrentLevelMap[i][j] == ATOM_CODE) {
+                    mSolutionAtomArray.add(new int[]{i + 1, j + 1}); // {x, y}//bad code, repair
+                    mNumberOfAtoms++;
+                }
+            }
+        }
+    }
+
 
     //Sobir's method
     int[][] generateMap(int n, int m) {
-        // todo implement generator, now preset
         int level0[][] = new int[n][m];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++) {
@@ -75,7 +86,7 @@ public class GameMap {
         mMoveCollector.add(arr);
     }
 
-    //todo why we need this? or not need
+    //we need this?
     private int[][] cleanLevel(int[][] level) {
         for (int i = 0; i < level.length; i++) {
             level[i][0] = 0;
@@ -109,13 +120,20 @@ public class GameMap {
      * @return
      */
     private boolean isExit(int cellX, int cellY, int direction) {
-        if ((cellX == 0 && direction == DIRECTION_LEFT) ||
+        return (cellX == 0 && direction == DIRECTION_LEFT) ||
                 (cellX == getWidth() - 1 && direction == DIRECTION_RIGHT) ||
                 (cellY == 0 && direction == DIRECTION_UP) ||
-                (cellY == getHeight() - 1 && direction == DIRECTION_DOWN))
-            return true;
-        else
-            return false;
+                (cellY == getHeight() - 1 && direction == DIRECTION_DOWN);
+    }
+
+    protected boolean isMoveAble(int mTouchX, int mTouchY, int laserDirection, int pixForBlockX, int pixForBlockY) {
+        int cellY, cellX;
+        cellX = Math.min(mTouchX / (pixForBlockX /* + 1 */), getWidth() - 1); // бесподобный костыль
+        cellY = Math.min(mTouchY / (pixForBlockY /* + 1 */), getHeight() - 1);
+
+        return (mCurrentLevelMap[cellY][cellX] == FREE_SPACE ||
+                mCurrentLevelMap[cellY][cellX] == MOVE_OUT) &&
+                mNumberofShoots > 0;
     }
 
     /**

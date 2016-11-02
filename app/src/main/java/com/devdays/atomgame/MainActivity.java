@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
         checkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                gameView.CheckResult();
+                gameView.checkResults();
             }
         });
 
