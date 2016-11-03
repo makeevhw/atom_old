@@ -15,6 +15,7 @@ public class GameMap {
     int[][] mCurrentLevelMap;
     int mNumberofShoots;
     private Random mRnd;
+    private float mHColor = 131071.65535f; // oh
 
     public GameMap(int n, int m) {
         mRnd = new Random();
@@ -24,6 +25,8 @@ public class GameMap {
         mCurrentLevelMap = addBoardersToLevel(generateMap(n - 2, m - 2)); // 2 fo borders
         initSolutionArrayAndAtomNumber();
         mNumberOfAtoms = getNumberOfAtoms();
+
+
     }
 
 
@@ -129,7 +132,7 @@ public class GameMap {
     public void MakeMove(int touchX, int touchY, int laserDrection, int pixForBlockX, int pixForBlockY) {
 
         int currentDirection = laserDrection;
-        int currentColor = Color.argb(255, mRnd.nextInt(256), mRnd.nextInt(256), mRnd.nextInt(256));
+        int currentColor = nextColor(); //Color.argb(255, mRnd.nextInt(256), mRnd.nextInt(256), mRnd.nextInt(256));
         // проставить коорды в массиве
         // добавить в аррэйлист для отрисовки начала луча
 
@@ -147,12 +150,36 @@ public class GameMap {
         if (mCurrentLevelMap[cellY][cellX] == FREE_SPACE) // не завпускали луч
             mCurrentLevelMap[cellY][cellX] = MOVE_IN; // показываем, что луч пущен
         else if (mCurrentLevelMap[cellY][cellX] == MOVE_OUT) { // если в этой ячейке выход луча, то
-            pixelOffsetX = 3 * pixForBlockX / 4;
-            pixelOffsetY = 3 * pixForBlockY / 4;
             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
         }
 
-        AddLineToDraws(cellX, cellY, pixelOffsetX, pixelOffsetY, laserDrection, currentColor, pixForBlockX, pixForBlockY);
+        //accurate drawing lines
+        switch (currentDirection) {
+            case DIRECTION_LEFT:
+                pixelOffsetY = pixForBlockY / 4;
+                break;
+            case DIRECTION_RIGHT:
+                pixelOffsetY = 3 * pixForBlockY / 4;
+                break;
+            case DIRECTION_UP:
+                pixelOffsetX = 3 * pixForBlockX / 4;
+                break;
+            case DIRECTION_DOWN:
+                pixelOffsetX = pixForBlockX / 4;
+                break;
+            default:
+                break;
+        }
+
+
+        AddLineToDraws(cellX, cellY,
+                pixelOffsetX,
+                pixelOffsetY,
+                laserDrection,
+                currentColor,
+                pixForBlockX,
+                pixForBlockY
+        );
 
 
         do { // трассируем путь
@@ -166,8 +193,9 @@ public class GameMap {
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
                             doubleLasers = true;
-                        } else
+                        } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
+                        }
                     }
                     break;
 
@@ -180,8 +208,9 @@ public class GameMap {
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS; // делаем шаг
                             doubleLasers = true;
-                        } else
-                            mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
+                        } else {
+                            mCurrentLevelMap[cellY][cellX] = MOVE_OUT; // добегались
+                        }
                     }
                     break;
                 case DIRECTION_UP:
@@ -195,8 +224,9 @@ public class GameMap {
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
                             doubleLasers = true;
-                        } else
+                        } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
+                        }
                     }
                     break;
                 case DIRECTION_DOWN:
@@ -210,24 +240,34 @@ public class GameMap {
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
                             doubleLasers = true;
-                        } else
+                        } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
+                        }
                     }
                     break;
-
                 default:
                     break;
             }
-
         } while (!isExit(cellX, cellY, currentDirection));
 
 
-        if (doubleLasers) {
-            pixelOffsetX = 3 * pixForBlockX / 4;
-            pixelOffsetY = 3 * pixForBlockY / 4;
-        } else {
-            pixelOffsetX = pixForBlockX / 4;
-            pixelOffsetY = pixForBlockY / 4;
+        //exit
+        //accurate drawing lines
+        switch (currentDirection) {
+            case DIRECTION_LEFT:
+                pixelOffsetY = pixForBlockY / 4;
+                break;
+            case DIRECTION_RIGHT:
+                pixelOffsetY = 3 * pixForBlockY / 4;
+                break;
+            case DIRECTION_UP:
+                pixelOffsetX = 3 * pixForBlockX / 4;
+                break;
+            case DIRECTION_DOWN:
+                pixelOffsetX = pixForBlockX / 4;
+                break;
+            default:
+                break;
         }
 
         // добавить в arraylist для отрисовки КОНЕЦ луча
@@ -244,6 +284,21 @@ public class GameMap {
 
         mNumberofShoots--;
     } //end MakeMove method
+
+    private int nextColor() {
+        //use golden ratio
+        float val = 32767.16383f;
+
+        mHColor *= val;
+        mHColor %= 359;
+
+        int resColor = Color.HSVToColor(
+                new float[]{mHColor,
+                        (0.7f + (mRnd.nextFloat() % 0.3f)),
+                        (0.85f + (mRnd.nextFloat() % 0.15f))}
+        );
+        return resColor;
+    }
 
     private void AddLineToDraws(int cellX, int cellY, int pixelOffsetX, int pixelOffsetY,
                                 int direction, int currentColor, int pixForBlockX, int pixForBlockY) {

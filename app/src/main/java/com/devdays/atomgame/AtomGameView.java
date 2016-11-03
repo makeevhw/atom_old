@@ -501,8 +501,10 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         } else {
             boolean isCorrect = true;
 
+            int xIndex = 0, yIndex = 1;
             for (int i = 0; i < mChosenAtomsArray.size(); i++) {
-                if (mGameMap.mCurrentLevelMap[mChosenAtomsArray.get(i)[0]][mChosenAtomsArray.get(i)[1]] != ATOM_CODE) {
+                if (
+                        mGameMap.mCurrentLevelMap[mChosenAtomsArray.get(i)[yIndex]][mChosenAtomsArray.get(i)[xIndex]] != ATOM_CODE) {
                     isCorrect = false;
                     break;
                 }
