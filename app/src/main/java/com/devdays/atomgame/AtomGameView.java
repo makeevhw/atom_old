@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.media.MediaPlayer;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -25,7 +24,6 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     protected int pixForBlockX, pixForBlockY;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
     protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY }
-    MediaPlayer[] mSoundplayers;
     private int mCurrentLevelNumber = 0;
     private GameMap mGameMap;
     private Paint mPaint;
@@ -47,9 +45,9 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         getHolder().addCallback(this); // for what?
         mPaint = new Paint();
         player = new SoundPlayer(context);
-
         mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
 
+        /*
         int n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
 
         int levelMode = 0;
@@ -58,7 +56,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
         // количество линий о горизонтали на количество координат для каждой линии
         mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
-
+*/
 
     }
 
@@ -69,6 +67,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
         // количество линий о горизонтали на количество координат для каждой линии
         mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
+        //numberShootsRefresh(); // костыль-багофикс
+        textViewInit(); // hotfix8
     }
 
     //////many draw methods
@@ -600,26 +600,39 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
     private void numberShootsRefresh() {
-        if (mGameMap.mNumberofShoots < 1)
-            textViewShoots.setTextColor(Color.RED);
+        if (mGameMap != null) {
+            textViewShoots = (TextView) (((MainActivity) this.getContext()).findViewById(R.id.textView1));
+            if (mGameMap.mLasersCount < 1)
+                textViewShoots.setTextColor(Color.RED);
 
-        textViewShoots.setText(getResources().getString(R.string.number_of_shoots)
-                + " " + mGameMap.mNumberofShoots + " ");
-        textViewShoots.invalidate(); // refresh
+            textViewShoots.setText(getResources().getString(R.string.number_of_shoots)
+                    + " " + mGameMap.mLasersCount + " ");
+            textViewShoots.invalidate(); // refresh
+        }
     }
 
     //print text, here
     public void findTextView() {
+
         textViewShoots = (TextView) (((MainActivity) this.getContext()).findViewById(R.id.textView1));
-        textViewShoots.setText(getResources().getString(R.string.number_of_shoots) + " " + mGameMap.mNumberofShoots + " ");
+        textViewShoots.setText(getResources().getString(R.string.number_of_shoots) + " " + 0 + " ");
 
         textViewAtoms = (TextView) ((MainActivity) this.getContext()).findViewById(R.id.textView2);
-        textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " + mGameMap.mNumberOfAtoms + " ");
+        textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " + 0 + " ");
 
         textViewRequest = (TextView) ((MainActivity) this.getContext()).findViewById(R.id.textViewRequest);
         textViewRequest.setText(" ");
 
         textViewHeader = (TextView) ((MainActivity) this.getContext()).findViewById(R.id.textViewHeader);
+        textViewHeader.setText(getResources().getString(R.string.level) + " " + 0);
+
+    }
+
+    private void textViewInit() {
+
+        textViewShoots.setText(getResources().getString(R.string.number_of_shoots) + " " + mGameMap.mLasersCount + " ");
+        textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " + mGameMap.mNumberOfAtoms + " ");
+        textViewRequest.setText(" ");
         textViewHeader.setText(getResources().getString(R.string.level) + " " + mCurrentLevelNumber);
     }
 

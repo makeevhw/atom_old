@@ -14,7 +14,7 @@ public class GameMap {
     int mNumberOfAtoms;
     ArrayList<Line> mLazersLines; // arrlist of all moves like {x1, y1, x2, y2, color}, for canvas redrawing
     int[][] mCurrentLevelMap;
-    int mNumberofShoots;
+    int mLasersCount = 0;
     //ArrayList<Hintsegment> hs = new ArrayList<>();
     HashMap<Cell, Line> mLazersLinesMap;
     private Random mRnd;
@@ -26,41 +26,25 @@ public class GameMap {
         mLazersLines = new ArrayList<>();
         mSolutionAtomArray = new ArrayList<>();
         mLazersLinesMap = new HashMap<>();
-        mCurrentLevelMap = addBoardersToLevel(generateMap(n - 2, levelMode)); // 2 fo borders
+        Level lvl = new Level(n - 2, levelMode); // 2 fo borders
+        mCurrentLevelMap = addBoardersToLevel(lvl.getMatrix());
         initSolutionArrayAndAtomNumber();
-        mNumberOfAtoms = getNumberOfAtoms();
+        mNumberOfAtoms = lvl.get_atoms_count();
+        mLasersCount = lvl.getLaser_count();
 
     }
 
 
     private void initSolutionArrayAndAtomNumber() {
-        mNumberOfAtoms = 0;
         for (int y = 0; y < getHeight(); y++) {
             for (int x = 0; x < getWidth(); x++) {
                 if (mCurrentLevelMap[y][x] == ATOM_CODE) {
                     mSolutionAtomArray.add(new int[]{x, y}); // {x, y}//bad code, repair
-                    mNumberOfAtoms++;
                 }
             }
         }
     }
 
-    //Sobir's method
-    int[][] generateMap(int n, int levelMode) { // levelMode ignored now
-        int level0[][] = new int[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                int temp = mRnd.nextInt(9);
-                if (temp == 0) {
-                    level0[i][j] = ATOM_CODE;
-                }
-            }
-        }
-
-        //todo change for "hard" or "soft" level mode
-        mNumberofShoots = 100 * (n + n) / 5; // hardcode, hackaton INFINITY_VAL implementation, big enough
-        return level0;
-    }
 
     private int[][] addBoardersToLevel(int[][] level) {
         int[][] levelWithBoarders = new int[level.length + 2][level[0].length + 2];
@@ -86,16 +70,6 @@ public class GameMap {
         mLazersLines.add(new Line(x1, y1, x2, y2, color));
     }
 
-    public int getNumberOfAtoms() {
-        int number = 0;
-        for (int i = 0; i < getHeight(); i++) {
-            for (int j = 0; j < getWidth(); j++) { //содержимое
-                if (mCurrentLevelMap[i][j] == ATOM_CODE)
-                    number++;
-            }
-        }
-        return number;
-    }
 
     /**
      * Проверяет, что луч вышел из путешествия по полю
@@ -119,7 +93,7 @@ public class GameMap {
 
         return (mCurrentLevelMap[cellY][cellX] == FREE_SPACE ||
                 mCurrentLevelMap[cellY][cellX] == MOVE_OUT) &&
-                mNumberofShoots > 0;
+                mLasersCount > 0;
     }
 
     /**
@@ -292,7 +266,7 @@ public class GameMap {
         mLazersLinesMap.put(outputCell, lazerOutputLine);
 
 
-        mNumberofShoots--;
+        mLasersCount--;
     } //end MakeMove method
 
     private int nextColor() {
