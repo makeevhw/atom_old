@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.media.MediaPlayer;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -24,6 +25,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     protected int pixForBlockX, pixForBlockY;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
     protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY }
+    MediaPlayer mp;
     private int mCurrentLevelNumber = 0;
     private GameMap mGameMap;
     private Paint mPaint;
@@ -44,6 +46,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         getHolder().addCallback(this); // for what?
 
 
+        //mp = MediaPlayer.create(, R.raw.combo);
         int m = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD);
 
 
@@ -98,13 +101,22 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         if (bitmapAtomBluePic == null) {
             bitmapAtomBluePic = BitmapFactory.decodeResource(
                     getResources(),
-                    R.drawable.atome_blue
+                    R.drawable.atome_blue2
             );
 
             bitmapAtomBluePic = Bitmap.createScaledBitmap(bitmapAtomBluePic,
                     pixForBlockX * 9 / 10,
                     pixForBlockX * 9 / 10,
                     true);
+
+            //transparent background make white
+            for (int x = 0; x < bitmapAtomBluePic.getWidth(); x++) {
+                for (int y = 0; y < bitmapAtomBluePic.getHeight(); y++) {
+                    if (bitmapAtomBluePic.getPixel(x, y) == Color.BLACK) {
+                        bitmapAtomBluePic.setPixel(x, y, Color.WHITE);
+                    }
+                }
+            }
         }
 
 
@@ -315,7 +327,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         //todo redo for drawlines, faster
         for (int i = 0; i < mGameMap.mSolutionAtomArray.size(); i++) {
 
-            float radius = Math.min(pixForBlockX / 2, pixForBlockY / 2);
+            float radius = Math.min(pixForBlockX / 2 - 5, pixForBlockY / 2 - 5);
             float x = pixForBlockX * mGameMap.mSolutionAtomArray.get(i)[0] + pixForBlockX / 2;
             float y = pixForBlockY * mGameMap.mSolutionAtomArray.get(i)[1] + pixForBlockY / 2;
 
@@ -329,6 +341,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
     void drawCellPicture(Canvas canvas, Bitmap bitmap, float left, float top) {
+
         canvas.drawBitmap(bitmap, left, top, null);
     }
 
