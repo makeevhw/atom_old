@@ -39,14 +39,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private boolean initialized = false;
     private float mBorderLeftX, mBorderRightX, mBorderTopY, mBorderBottomY;
     private boolean mIsHighlighted = false;
-    //private int currentLaserSound
+    private SoundPlayer player;
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
         getHolder().addCallback(this); // for what?
         mPaint = new Paint();
-
+        player = new SoundPlayer(context);
 
         mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
 
@@ -497,7 +497,10 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_RIGHT,
                         pixForBlockX,
                         pixForBlockY);
-                attacked = true;
+                player.playLaserSound();
+                numberShootsRefresh();
+                performDraw();
+                //attacked = true; // todo refactor this method completely
             }
         } else if (mTouchX > mLineVerticalData[mLineVerticalData.length - 8] &&
                 mTouchY > mLineHorizontalData[5] // RIGHT
@@ -509,7 +512,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_LEFT,
                         pixForBlockX,
                         pixForBlockY);
-                //mpSound1.start();
+                player.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 return true;
@@ -525,7 +528,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_DOWN,
                         pixForBlockX,
                         pixForBlockY);
-                //mpSound1.start();
+                player.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 return true;
@@ -543,7 +546,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_UP,
                         pixForBlockX,
                         pixForBlockY);
-                //mpSound1.start();
+                player.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 return true;

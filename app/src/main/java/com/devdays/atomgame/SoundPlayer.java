@@ -8,11 +8,15 @@ public class SoundPlayer {
 
     private MediaPlayer[] mSoundPlayers;
     private int currenLaserSoud;
+    private int laserSoundNumber;
 
     public SoundPlayer(Context context) {
-        mSoundPlayers = new MediaPlayer[3]; // 3 enough
+        laserSoundNumber = 3;
+        mSoundPlayers = new MediaPlayer[laserSoundNumber]; // 3 enough
         mSoundPlayers[0] = MediaPlayer.create(context, R.raw.bcfire01);
-        mSoundPlayers[1] = MediaPlayer.create(context, R.raw.trprsht2);
+        mSoundPlayers[1] = MediaPlayer.create(context, R.raw.reptrrico01);
+        mSoundPlayers[2] = MediaPlayer.create(context, R.raw.trprsht1);
+
         currenLaserSoud = 0;
     }
 
@@ -20,7 +24,9 @@ public class SoundPlayer {
         if (!mSoundPlayers[currenLaserSoud].isPlaying()) {
             mSoundPlayers[currenLaserSoud].start();
             currenLaserSoud++;
-            currenLaserSoud %= 2;
+            currenLaserSoud %= laserSoundNumber;
+        } else {
+            // all are bisy
         }
     }
 
