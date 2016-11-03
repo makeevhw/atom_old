@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);     //  Fixed Portrait orientation
         setContentView(R.layout.main);
+
         final AtomGameView gameView = (AtomGameView) findViewById(R.id.gameview);
         gameView.findTextView();
 

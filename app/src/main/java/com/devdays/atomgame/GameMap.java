@@ -3,6 +3,7 @@ package com.devdays.atomgame;
 import android.graphics.Color;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 
@@ -11,22 +12,23 @@ public class GameMap {
     private final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
     ArrayList<int[]> mSolutionAtomArray;
     int mNumberOfAtoms;
-    ArrayList<int[]> mMoveCollector; // arrlist of all moves like {x1, y1, x2, y2, color}
+    ArrayList<Line> mLazersLines; // arrlist of all moves like {x1, y1, x2, y2, color}, for canvas redrawing
     int[][] mCurrentLevelMap;
     int mNumberofShoots;
-    ArrayList<Hintsegments> hs = new ArrayList<>();
+    //ArrayList<Hintsegment> hs = new ArrayList<>();
+    HashMap<Cell, Line> mLazersLinesMap;
     private Random mRnd;
     private float mHColor = 131071.65535f; // oh
 
+
     public GameMap(int n, int m) {
         mRnd = new Random();
-        mMoveCollector = new ArrayList<int[]>();
+        mLazersLines = new ArrayList<>();
         mSolutionAtomArray = new ArrayList<>();
-
+        mLazersLinesMap = new HashMap<>();
         mCurrentLevelMap = addBoardersToLevel(generateMap(n - 2, m - 2)); // 2 fo borders
         initSolutionArrayAndAtomNumber();
         mNumberOfAtoms = getNumberOfAtoms();
-
 
     }
 
@@ -81,8 +83,7 @@ public class GameMap {
     }
 
     public void addMoveLine(int x1, int y1, int x2, int y2, int color) {
-        int[] arr = {x1, y1, x2, y2, color};
-        mMoveCollector.add(arr);
+        mLazersLines.add(new Line(x1, y1, x2, y2, color));
     }
 
     public int getNumberOfAtoms() {
@@ -172,7 +173,7 @@ public class GameMap {
         }
 
 
-        AddLineToDraws(cellX, cellY,
+        Line lazerInputLine = AddLineToDraws(cellX, cellY,
                 pixelOffsetX,
                 pixelOffsetY,
                 laserDrection,
@@ -180,6 +181,8 @@ public class GameMap {
                 pixForBlockX,
                 pixForBlockY
         );
+        Cell inputCell = new Cell(cellX, cellY, false);
+        //inputCell.setIsOutpuLine(false);
 
 
         do { // трассируем путь
@@ -267,7 +270,7 @@ public class GameMap {
         }
 
         // добавить в arraylist для отрисовки КОНЕЦ луча
-        AddLineToDraws(
+        Line lazerOutputLine = AddLineToDraws(
                 cellX,
                 cellY,
                 pixelOffsetX,
@@ -277,6 +280,17 @@ public class GameMap {
                 pixForBlockX,
                 pixForBlockY
         );
+
+        //добавляем их в мапу для перекрестной ссылки
+        lazerInputLine.setPair(lazerOutputLine);
+        lazerOutputLine.setPair(lazerInputLine);
+
+        Cell outputCell = new Cell(cellX, cellY, true);
+        //outputCell.setIsOutpuLine(true);
+
+        mLazersLinesMap.put(inputCell, lazerInputLine);
+        mLazersLinesMap.put(outputCell, lazerOutputLine);
+
 
         mNumberofShoots--;
     } //end MakeMove method
@@ -296,43 +310,52 @@ public class GameMap {
         return resColor;
     }
 
-    private void AddLineToDraws(int cellX, int cellY, int pixelOffsetX, int pixelOffsetY,
-                                int direction, int currentColor, int pixForBlockX, int pixForBlockY) {
+    //return linee, cause arcitecutre of the app is awfull
+    private Line AddLineToDraws(int cellX, int cellY,
+                                int pixelOffsetX,
+                                int pixelOffsetY,
+                                int direction,
+                                int currentColor,
+                                int pixForBlockX,
+                                int pixForBlockY
+    ) {
         switch (direction) { // вход лазера
             case DIRECTION_RIGHT:
+                int x1 = cellX * pixForBlockX;
+                int y1 = cellY * pixForBlockY + pixelOffsetY;
+                int x2 = cellX * pixForBlockX + pixForBlockX;
+                int y2 = cellY * pixForBlockY + pixelOffsetY;
                 addMoveLine( // x-s left to right
-                        cellX * pixForBlockX,
-                        cellY * pixForBlockY + pixelOffsetY,
-                        cellX * pixForBlockX + pixForBlockX,
-                        cellY * pixForBlockY + pixelOffsetY,
-                        currentColor);
-                break;
+                        x1, y1, x2, y2,
+                        currentColor); // old, deprecated, remove
+                return new Line(x1, y1, x2, y2, currentColor, null);
+
             case DIRECTION_LEFT:
-                addMoveLine(
-                        cellX * pixForBlockX + pixForBlockX,
-                        cellY * pixForBlockY + pixelOffsetY,
-                        cellX * pixForBlockX,
-                        cellY * pixForBlockY + pixelOffsetY,
-                        currentColor);
-                break;
+                x1 = cellX * pixForBlockX + pixForBlockX;
+                y1 = cellY * pixForBlockY + pixelOffsetY;
+                x2 = cellX * pixForBlockX;
+                y2 = cellY * pixForBlockY + pixelOffsetY;
+                addMoveLine(x1, y1, x2, y2, currentColor);
+                return new Line(x1, y1, x2, y2, currentColor, null);
+
             case DIRECTION_UP:
-                addMoveLine(
-                        cellX * pixForBlockX + pixelOffsetX,
-                        cellY * pixForBlockY + pixForBlockY,
-                        cellX * pixForBlockX + pixelOffsetX,
-                        cellY * pixForBlockY,
-                        currentColor);
-                break;
+                x1 = cellX * pixForBlockX + pixelOffsetX;
+                y1 = cellY * pixForBlockY + pixForBlockY;
+                x2 = cellX * pixForBlockX + pixelOffsetX;
+                y2 = cellY * pixForBlockY;
+                addMoveLine(x1, y1, x2, y2, currentColor);
+                return new Line(x1, y1, x2, y2, currentColor, null);
+
             case DIRECTION_DOWN:
-                addMoveLine(
-                        cellX * pixForBlockX + pixelOffsetX,
-                        cellY * pixForBlockY,
-                        cellX * pixForBlockX + pixelOffsetX,
-                        cellY * pixForBlockY + pixForBlockY,
-                        currentColor);
-                break;
+                x1 = cellX * pixForBlockX + pixelOffsetX;
+                y1 = cellY * pixForBlockY;
+                x2 = cellX * pixForBlockX + pixelOffsetX;
+                y2 = cellY * pixForBlockY + pixForBlockY;
+                addMoveLine(x1, y1, x2, y2, currentColor);
+                return new Line(x1, y1, x2, y2, currentColor, null);
+
             default:
-                break;
+                return null;
         }
     }
 

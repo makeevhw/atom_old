@@ -27,25 +27,23 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private int mCurrentLevelNumber = 0;
     private GameMap mGameMap;
     private Paint mPaint;
-    private float[] mLineHorizontalData, mLineVerticalData;
+    private float[] mLineHorizontalData, mLineVerticalData; //todo redo with line class
     private boolean mIsMoved = false;
     private Bitmap bitmapAtomBluePic = null;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
     private float cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 70 * getContext().getResources().getDisplayMetrics().density; //150;
     private int mFirstTouchX, mFirstTouchY;
+    private boolean initialized = false;
+    private float mBorderLeftX, mBorderRightX, mBorderTopY, mBorderBottomY;
+    private boolean mIsHighlighted = false;
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
         getHolder().addCallback(this); // for what?
 
-        //todo for n, m
 
-
-        //this.invalidate();
-
-        //int n = (getContext().getResources().getDisplayMetrics().heightPixels - 200) / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD;
         int m = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD);
 
 
@@ -125,6 +123,25 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         //performDraw blocks - many lines
         //get size for cell
 
+        //if (!initialized) {
+        initVerticalLines(canvas);
+        initHorizontalLines(canvas);
+        initialized = true;
+        //}
+
+        mPaint.setStrokeWidth(1.0f);
+        mPaint.setColor(Color.BLUE);
+        canvas.drawLines(mLineHorizontalData, mPaint); // рисуем сетку по горизонтали
+        //todo redo for cell blocks
+
+        // рисуем сетку по вертикали
+
+        mPaint.setStrokeWidth(1.0f);
+        mPaint.setColor(Color.BLUE);
+        canvas.drawLines(mLineVerticalData, mPaint);
+    }
+
+    private void initHorizontalLines(Canvas canvas) {
         final int offsetX1 = 0;
         final int offsetY1 = 1;
         final int offsetX2 = 2;
@@ -136,21 +153,27 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
             mLineHorizontalData[i + offsetX2] = canvas.getWidth(); // x2
             mLineHorizontalData[i + offsetY2] = pixForBlockY * (i / 4); // y2
         }
-        mPaint.setStrokeWidth(1.0f);
-        mPaint.setColor(Color.BLUE);
-        canvas.drawLines(mLineHorizontalData, mPaint); // рисуем сетку по горизонтали
-        //todo redo for cell blocks
 
-        // рисуем сетку по вертикали
+        mBorderTopY = mLineHorizontalData[5];
+        mBorderBottomY = mLineHorizontalData[mLineHorizontalData.length - 7];
+    }
+
+    private void initVerticalLines(Canvas canvas) {
+        final int offsetX1 = 0;
+        final int offsetY1 = 1;
+        final int offsetX2 = 2;
+        final int offsetY2 = 3;
+
         for (int i = 0; i < mLineVerticalData.length; i += 4) {
             mLineVerticalData[i + offsetX1] = pixForBlockX * (i / 4); // x1
             mLineVerticalData[i + offsetY1] = 0; //y1
             mLineVerticalData[i + offsetX2] = pixForBlockX * (i / 4); // x2
             mLineVerticalData[i + offsetY2] = canvas.getHeight(); // y2
         }
-        mPaint.setStrokeWidth(1.0f);
-        mPaint.setColor(Color.BLUE);
-        canvas.drawLines(mLineVerticalData, mPaint);
+
+        mBorderLeftX = mLineVerticalData[4];
+        mBorderRightX = mLineVerticalData[mLineVerticalData.length - 8];
+
     }
 
     private void drawBorders(Canvas canvas) {
@@ -159,87 +182,100 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mPaint.setColor(Color.BLACK);
         canvas.drawLine(
                 mLineHorizontalData[4],
-                mLineHorizontalData[5],
+                mLineHorizontalData[5] + 3,
                 mLineHorizontalData[6],
-                mLineHorizontalData[7],
+                mLineHorizontalData[7] + 3,
                 mPaint);
         canvas.drawLine(
                 mLineHorizontalData[mLineHorizontalData.length - 8],
-                mLineHorizontalData[mLineHorizontalData.length - 7],
+                mLineHorizontalData[mLineHorizontalData.length - 7] - 3,
                 mLineHorizontalData[mLineHorizontalData.length - 6],
-                mLineHorizontalData[mLineHorizontalData.length - 5],
+                mLineHorizontalData[mLineHorizontalData.length - 5] - 3,
                 mPaint);
         canvas.drawLine(
-                mLineVerticalData[4],
+                mLineVerticalData[4] + 3,
                 mLineVerticalData[5],
-                mLineVerticalData[6],
+                mLineVerticalData[6] + 3,
                 mLineVerticalData[7],
                 mPaint);
         canvas.drawLine(
-                mLineVerticalData[mLineVerticalData.length - 8],
+                mLineVerticalData[mLineVerticalData.length - 8] - 3,
                 mLineVerticalData[mLineVerticalData.length - 7],
-                mLineVerticalData[mLineVerticalData.length - 6],
+                mLineVerticalData[mLineVerticalData.length - 6] - 3,
                 mLineVerticalData[mLineVerticalData.length - 5]
                 , mPaint);
     }
 
+
+    private void drawLazer(Canvas canvas, Line line, float strokeWidth) {
+        mPaint.setStrokeWidth(strokeWidth);
+        mPaint.setColor(line.color);
+
+        int x1 = line.x1;
+        int y1 = line.y1;
+        int x2 = line.x2;
+        int y2 = line.y2;
+
+        int deltaX = x2 - x1;
+        int deltaY = y2 - y1;
+
+        int cutFactor = 10;
+        if (deltaX > 0) { // left to right
+            x2 = x2 - Math.abs(deltaX) / cutFactor;
+        } else if (deltaX < 0) { // right to left
+            x2 = x2 + Math.abs(deltaX) / cutFactor;
+        }
+
+        if (deltaY > 0) { // down
+            y2 = y2 - Math.abs(deltaY) / cutFactor;
+        } else if (deltaY < 0) { // up
+            y2 = y2 + Math.abs(deltaY) / cutFactor;
+        }
+
+        canvas.drawLine(
+                x1,
+                y1,
+                x2,
+                y2,
+                mPaint);
+
+        drawArrow(
+                canvas,
+                line.x1,
+                line.y1,
+                line.x2,
+                line.y2,
+                line.color,
+                strokeWidth / 100);
+    }
+
     private void drawLazers(Canvas canvas) {
-        mPaint.setStrokeWidth(15.0f); // рисуем ходы
-        if (mGameMap.mMoveCollector.size() > 0) {
-            for (int i = 0; i < mGameMap.mMoveCollector.size(); i++) {
-                //for (int i = mGameMap.mMoveCollector.size() - 2; i < mGameMap.mMoveCollector.size(); i++) {
-
-
-                mPaint.setColor(mGameMap.mMoveCollector.get(i)[4]);
-
-                int
-                        x1 = mGameMap.mMoveCollector.get(i)[0],
-                        y1 = mGameMap.mMoveCollector.get(i)[1],
-                        x2 = mGameMap.mMoveCollector.get(i)[2],
-                        y2 = mGameMap.mMoveCollector.get(i)[3];
-
-                int deltaX = x2 - x1;
-                int deltaY = y2 - y1;
-
-                int cutFactor = 10;
-                if (deltaX > 0) { // left to right
-                    x2 = x2 - Math.abs(deltaX) / cutFactor;
-                } else if (deltaX < 0) { // right to left
-                    x2 = x2 + Math.abs(deltaX) / cutFactor;
-                }
-
-                if (deltaY > 0) { // down
-                    y2 = y2 - Math.abs(deltaY) / cutFactor;
-                } else if (deltaY < 0) { // up
-                    y2 = y2 + Math.abs(deltaY) / cutFactor;
-                }
-
-                canvas.drawLine(
-                        x1,
-                        y1,
-                        x2,
-                        y2,
-                        mPaint);
-
-                drawArrow(
-                        canvas,
-                        mGameMap.mMoveCollector.get(i)[0],
-                        mGameMap.mMoveCollector.get(i)[1],
-                        mGameMap.mMoveCollector.get(i)[2],
-                        mGameMap.mMoveCollector.get(i)[3],
-                        mGameMap.mMoveCollector.get(i)[4]);
+        //mPaint.setStrokeWidth(15.0f); // рисуем ходы
+        if (mGameMap.mLazersLines.size() > 0) {
+            for (int i = 0; i < mGameMap.mLazersLines.size(); i++) {
+                drawLazer(canvas, mGameMap.mLazersLines.get(i), 15.0f);
             }
         }
     }
 
-    private void drawArrow(Canvas canvas, float x0, float y0, float x1, float y1, int arrowColor) {
+    /**
+     * @param canvas
+     * @param x0
+     * @param y0
+     * @param x1
+     * @param y1
+     * @param arrowColor
+     * @param frac       frac : 0 < frac < 1 - init size of arrow head
+     */
+    private void drawArrow(Canvas canvas, float x0, float y0, float x1, float y1, int arrowColor,
+                           float frac) {
 
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(arrowColor);
 
         float deltaX = x1 - x0;
         float deltaY = y1 - y0;
-        float frac = (float) 0.15;
+        //float frac = fr;
         /*The variable
             frac : 0 < frac < 1
                 determines the size of the arrow head.*/
@@ -302,6 +338,19 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         getHolder().unlockCanvasAndPost(canvas);
     }
 
+    private void drawFatLines(Line line1, Line line2) {
+        Canvas canvas = getHolder().lockCanvas();
+
+
+        draw(canvas);
+
+        drawLazer(canvas, line1, 25.0f);
+        drawLazer(canvas, line2, 25.0f);
+
+
+        getHolder().unlockCanvasAndPost(canvas);
+    }
+
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
@@ -350,26 +399,77 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                mFirstTouchX = (int) event.getX();
+                mFirstTouchX = (int) event.getX(); // для проверки на движения и усключения ложных тапов
                 mFirstTouchY = (int) event.getY();
                 mIsMoved = false;
+                //todo add highlighting
+                tryHighlighting(mFirstTouchX, mFirstTouchY);
+
                 return true;
             case MotionEvent.ACTION_MOVE:
                 mIsMoved = true;
                 return mIsMoved;
-            case MotionEvent.ACTION_UP: /// todo fix bug with moving and Xses
+            case MotionEvent.ACTION_UP:
+                if (mIsHighlighted) {
+                    performDraw();
+                    mIsHighlighted = false;
+                    return true;
+                }
                 int mTouchX = (int) event.getX();
                 int mTouchY = (int) event.getY();
                 if (Math.abs(mFirstTouchX - mTouchX) > 2 * pixForBlockX / 3 ||
                         Math.abs(mFirstTouchY - mTouchY) > 2 * pixForBlockY / 3)
                     return false; // ignore moving
                 mIsMoved = false; // remove this filed?
-                performLazerAttack(mTouchX, mTouchY);
+                tryLazerAttack(mTouchX, mTouchY);
         }
         return false;
     }
 
-    private boolean performLazerAttack(int mTouchX, int mTouchY) {
+    private boolean tryHighlighting(int x, int y) {
+        int cellX = Math.min(x / (pixForBlockX /* + 1 */), getWidth() - 1); // бесподобный костыль
+        int cellY = Math.min(y / (pixForBlockY /* + 1 */), getHeight() - 1);
+        Line line = null;
+        Cell cl = new Cell(cellX, cellY, false); // false by default
+
+        //get lazer, highlight both
+        if (y > mBorderTopY && y < mBorderBottomY) { // LEFT OR RIGHT
+            if (x < mBorderLeftX) { // left
+                if (y < cellY * pixForBlockY + pixForBlockY / 2) // output
+                    cl.setIsOutpuLine(true);
+                else  // input
+                    cl.setIsOutpuLine(false);
+            } else if (x > mBorderRightX) // right
+                if (y < cellY * pixForBlockY + pixForBlockY / 2) // input
+                    cl.setIsOutpuLine(false);
+                else  // output
+                    cl.setIsOutpuLine(true);
+
+        } else if (x > mBorderLeftX && x < mBorderRightX) { // Top or bottom
+            if (y < mBorderTopY) { // top
+                if (x < cellX * pixForBlockX + pixForBlockX / 2) // inp
+                    cl.setIsOutpuLine(false);
+                else  // outp
+                    cl.setIsOutpuLine(true);
+            } else if (y > mBorderBottomY) // bottom
+                if (x < cellX * pixForBlockX + pixForBlockX / 2) // outp
+                    cl.setIsOutpuLine(true);
+                else  // inp
+                    cl.setIsOutpuLine(false);
+        }
+
+        line = mGameMap.mLazersLinesMap.get(cl);
+
+        if (line != null) { // достать пару, отрисовать с 2х шириной линии
+            // сохранить линни для, хотя не, перерисуем всё
+            drawFatLines(line, line.pair);
+            mIsHighlighted = true;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean tryLazerAttack(int mTouchX, int mTouchY) {
         if (mTouchX < mLineVerticalData[4] && mTouchY > mLineHorizontalData[5]
                 && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) { // LEFT
             if (mGameMap.isMoveAble(mTouchX, mTouchY, pixForBlockX, pixForBlockY)) {
