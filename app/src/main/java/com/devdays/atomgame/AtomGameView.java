@@ -32,7 +32,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private Bitmap bitmapAtomBluePic = null;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
-    private int cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 150;
+    private float cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 70 * getContext().getResources().getDisplayMetrics().density; //150;
     private int mFirstTouchX, mFirstTouchY;
 
 
@@ -46,7 +46,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         //this.invalidate();
 
         //int n = (getContext().getResources().getDisplayMetrics().heightPixels - 200) / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD;
-        int m = getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD;
+        int m = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD);
 
 
         mGameMap = new GameMap(m, m); // todo redo for n, m, or not, squares are cool
