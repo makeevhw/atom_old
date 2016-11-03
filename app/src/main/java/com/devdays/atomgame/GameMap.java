@@ -14,6 +14,7 @@ public class GameMap {
     ArrayList<int[]> mMoveCollector; // arrlist of all moves like {x1, y1, x2, y2, color}
     int[][] mCurrentLevelMap;
     int mNumberofShoots;
+    ArrayList<Hintsegments> hs = new ArrayList<>();
     private Random mRnd;
     private float mHColor = 131071.65535f; // oh
 
@@ -136,11 +137,10 @@ public class GameMap {
         // проставить коорды в массиве
         // добавить в аррэйлист для отрисовки начала луча
 
-        int cellY = 0;
-        int cellX = 0;
+        int cellY;
+        int cellX;
         int pixelOffsetX = pixForBlockX / 4;
         int pixelOffsetY = pixForBlockY / 4;
-        boolean isAtomCollided = false, doubleLasers = false;
 
         cellX = Math.min(touchX / (pixForBlockX /* + 1 */), getWidth() - 1); // бесподобный костыль
         cellY = Math.min(touchY / (pixForBlockY /* + 1 */), getHeight() - 1);
@@ -192,7 +192,6 @@ public class GameMap {
                         cellX++; // go to next cell and check endlessness
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
-                            doubleLasers = true;
                         } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
                         }
@@ -207,7 +206,6 @@ public class GameMap {
                         cellX--;
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS; // делаем шаг
-                            doubleLasers = true;
                         } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT; // добегались
                         }
@@ -223,7 +221,6 @@ public class GameMap {
                         cellY--;
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
-                            doubleLasers = true;
                         } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
                         }
@@ -239,7 +236,6 @@ public class GameMap {
                         cellY++;
                         if (mCurrentLevelMap[cellY][cellX] == MOVE_IN) {
                             mCurrentLevelMap[cellY][cellX] = DOUBLE_LASERS;
-                            doubleLasers = true;
                         } else {
                             mCurrentLevelMap[cellY][cellX] = MOVE_OUT;
                         }

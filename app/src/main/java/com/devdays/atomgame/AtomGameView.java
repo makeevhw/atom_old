@@ -28,11 +28,12 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private GameMap mGameMap;
     private Paint mPaint;
     private float[] mLineHorizontalData, mLineVerticalData;
-    private boolean mIsPressed = false;
+    private boolean mIsMoved = false;
     private Bitmap bitmapAtomBluePic = null;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
     private int cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 150;
+    private int mFirstTouchX, mFirstTouchY;
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
@@ -349,14 +350,20 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                mIsPressed = true;
+                mFirstTouchX = (int) event.getX();
+                mFirstTouchY = (int) event.getY();
+                mIsMoved = false;
                 return true;
             case MotionEvent.ACTION_MOVE:
-                return mIsPressed;
+                mIsMoved = true;
+                return mIsMoved;
             case MotionEvent.ACTION_UP: /// todo fix bug with moving and Xses
                 int mTouchX = (int) event.getX();
                 int mTouchY = (int) event.getY();
-                mIsPressed = false; // remove this filed?
+                if (Math.abs(mFirstTouchX - mTouchX) > 2 * pixForBlockX / 3 ||
+                        Math.abs(mFirstTouchY - mTouchY) > 2 * pixForBlockY / 3)
+                    return false; // ignore moving
+                mIsMoved = false; // remove this filed?
                 performLazerAttack(mTouchX, mTouchY);
         }
         return false;
