@@ -20,7 +20,7 @@ import java.util.ArrayList;
 public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback {
 
     protected final int ATOM_CODE = 1; //, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
-    private final float scale = getContext().getResources().getDisplayMetrics().density;
+    //private final float scale = getContext().getResources().getDisplayMetrics().density;
     protected int pixForBlockX, pixForBlockY;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
     protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY }
@@ -32,12 +32,13 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private Bitmap bitmapAtomBluePic = null;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
-    private float cellPixelSize = 70 * getContext().getResources().getDisplayMetrics().density; //150;
+    private float cellPixelSize = 75 * getContext().getResources().getDisplayMetrics().density; //150;
     private int mFirstTouchX, mFirstTouchY;
     private boolean initialized = false;
     private float mBorderLeftX, mBorderRightX, mBorderTopY, mBorderBottomY;
     private boolean mIsHighlighted = false;
     private SoundPlayer player;
+    private int mLevelMode;
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
@@ -69,6 +70,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
         //numberShootsRefresh(); // костыль-багофикс
         textViewInit(); // hotfix8
+        mLevelMode = levelMode;
     }
 
     //////many draw methods
@@ -665,6 +667,11 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
         }
 
+    }
+
+    public void restartGame() {
+        mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
+        //generateMapWithParam();
     }
 
 

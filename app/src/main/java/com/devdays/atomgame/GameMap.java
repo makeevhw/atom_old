@@ -29,22 +29,23 @@ public class GameMap {
         Level lvl = new Level(n - 2, levelMode); // 2 fo borders
         mCurrentLevelMap = addBoardersToLevel(lvl.getMatrix());
         initSolutionArrayAndAtomNumber();
-        mNumberOfAtoms = lvl.get_atoms_count();
+        //mNumberOfAtoms = lvl.get_atoms_count();
         mLasersCount = lvl.getLaser_count();
 
     }
 
 
     private void initSolutionArrayAndAtomNumber() {
+        mNumberOfAtoms = 0;
         for (int y = 0; y < getHeight(); y++) {
             for (int x = 0; x < getWidth(); x++) {
                 if (mCurrentLevelMap[y][x] == ATOM_CODE) {
                     mSolutionAtomArray.add(new int[]{x, y}); // {x, y}//bad code, repair
+                    mNumberOfAtoms++;
                 }
             }
         }
     }
-
 
     private int[][] addBoardersToLevel(int[][] level) {
         int[][] levelWithBoarders = new int[level.length + 2][level[0].length + 2];
