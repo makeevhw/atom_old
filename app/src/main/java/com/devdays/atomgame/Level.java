@@ -17,13 +17,23 @@ public class Level {
     private int atoms_count;
     private int[][] matrix;
     private int laser_count;
+    private int N;
 
     public Level(int n, int level) {
         laser_count = 0;
+        N = n;
         atoms = new Atom[n * n];
         atoms_count = 0;
 
         matrix = generateMap(n, level);
+
+        System.out.println(get_atoms_count());
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                System.out.print(matrix[i][j] + " ");
+            }
+            System.out.println();
+        }
     }
 
     public int[][] getMatrix() {
@@ -99,10 +109,10 @@ public class Level {
         ++atoms_count;
 
         for (int k = 0; k < atoms_count; ++k) {
-            add_atom(0, atoms[k].i, true, 0, atoms[k].j, true, EPIC);
-            add_atom(0, atoms[k].i, true, atoms[k].j, n, true, EPIC);
-            add_atom(atoms[k].i, n, true, 0, atoms[k].j, true, EPIC);
-            add_atom(atoms[k].i, n, true, atoms[k].j, n, true, EPIC);
+            add_atom(0, atoms[k].i, true, 0, atoms[k].j, true, EPIC + 1);
+            add_atom(0, atoms[k].i, true, atoms[k].j, n, true, EPIC + 1);
+            add_atom(atoms[k].i, n, true, 0, atoms[k].j, true, EPIC + 1);
+            add_atom(atoms[k].i, n, true, atoms[k].j, n, true, EPIC + 1);
         }
 
         for (int k = 0; k < atoms_count; ++k) {
@@ -117,10 +127,45 @@ public class Level {
     private int[][] legendary_map(int n) {
 
         int leg_map[][] = new int[n][n];
+        Random rnd = new Random();
 
         for (int i = 0; i < n; ++i)
             Arrays.fill(leg_map[i], 0);
 
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                leg_map[i][j] = rnd.nextInt(2);
+                if (leg_map[i][j] == 1) ++atoms_count;
+            }
+        }
+
+        int count;
+        for (int i = 1; i < N - 1; ++i) {
+            for (int j = 1; j < N - 1; ++j) {
+                count = 0;
+                if (leg_map[i - 1][j - 1] == 1) ++count;
+                if (leg_map[i - 1][j] == 1) ++count;
+                if (leg_map[i - 1][j + 1] == 1) ++count;
+                if (leg_map[i][j - 1] == 1) ++count;
+                if (leg_map[i][j] == 1) ++count;
+                if (leg_map[i][j + 1] == 1) ++count;
+                if (leg_map[i + 1][j - 1] == 1) ++count;
+                if (leg_map[i + 1][j] == 1) ++count;
+                if (leg_map[i + 1][j + 1] == 1) ++count;
+
+                if (count == 9) {
+                    int ki = rnd.nextInt(2);
+                    int kj = rnd.nextInt(2);
+
+                    if (rnd.nextBoolean()) {
+                        leg_map[i - ki][j - kj] = 0;
+                    } else {
+                        leg_map[i + ki][j + kj] = 0;
+                    }
+                }
+            }
+        }
+        /*
         int i = randInt(0, n, true);
         int j = randInt(0, n, true);
         leg_map[i][j] = 1;
@@ -137,7 +182,7 @@ public class Level {
         for (int k = 0; k < atoms_count; ++k) {
             leg_map[atoms[k].i][atoms[k].j] = 1;
         }
-
+*/
         laser_count = 4 * n;
         return leg_map;
 
@@ -169,6 +214,10 @@ public class Level {
             int count = 0;
             int type = 1;
             for (int m = 0; m < atoms_count; ++m) {
+                if (atoms[m].i == i && atoms[m].j == j) {
+                    type = 0;
+                    break;
+                }
                 if (atoms[m].i == i || atoms[m].j == j) {
                     if (!atoms[m].haspair) {
                         if (count == level) {
