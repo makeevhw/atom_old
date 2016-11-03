@@ -25,7 +25,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     protected int pixForBlockX, pixForBlockY;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
     protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY }
-    MediaPlayer mp;
+    MediaPlayer[] mSoundplayers;
     private int mCurrentLevelNumber = 0;
     private GameMap mGameMap;
     private Paint mPaint;
@@ -34,39 +34,42 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private Bitmap bitmapAtomBluePic = null;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
-    private float cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD = 70 * getContext().getResources().getDisplayMetrics().density; //150;
+    private float cellPixelSize = 70 * getContext().getResources().getDisplayMetrics().density; //150;
     private int mFirstTouchX, mFirstTouchY;
     private boolean initialized = false;
     private float mBorderLeftX, mBorderRightX, mBorderTopY, mBorderBottomY;
     private boolean mIsHighlighted = false;
+    //private int currentLaserSound
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
         getHolder().addCallback(this); // for what?
-
-
-        //mp = MediaPlayer.create(, R.raw.combo);
-        int m = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSizePLEASE_DONT_USE_ME_IT_IS_GOVNOKOD);
-
-
-        mGameMap = new GameMap(m, m); // todo redo for n, m, or not, squares are cool
         mPaint = new Paint();
 
 
+        mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
+
+        int n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
+
+        int levelMode = 0;
+        //int n = 0;
+        mGameMap = new GameMap(n, levelMode); // todo redo for n, m, or not, squares are cool
         mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
         // количество линий о горизонтали на количество координат для каждой линии
-
         mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
-
-
-        mChosenAtomsArray = new ArrayList<int[]>();
-
-        //mLinesCheckedData = new float[mGameMap.mGameMap.mNumberOfAtoms * 8]; // todo WHY????
 
 
     }
 
+
+    void generateMapWithParam(int levelMode) { // n parametr deleted
+        int n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
+        mGameMap = new GameMap(n, levelMode); // todo redo for n, m, or not, squares are cool
+        mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
+        // количество линий о горизонтали на количество координат для каждой линии
+        mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
+    }
 
     //////many draw methods
     void drawChoses(Canvas canvas) {
@@ -483,6 +486,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
     private boolean tryLazerAttack(int mTouchX, int mTouchY) {
+        boolean attacked = false;
+
         if (mTouchX < mLineVerticalData[4] && mTouchY > mLineHorizontalData[5]
                 && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) { // LEFT
             if (mGameMap.isMoveAble(mTouchX, mTouchY, pixForBlockX, pixForBlockY)) {
@@ -492,11 +497,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_RIGHT,
                         pixForBlockX,
                         pixForBlockY);
-                numberShootsRefresh();
-                performDraw();
-                return true;
-            } else
-                return false;
+                attacked = true;
+            }
         } else if (mTouchX > mLineVerticalData[mLineVerticalData.length - 8] &&
                 mTouchY > mLineHorizontalData[5] // RIGHT
                 && mTouchY < mLineHorizontalData[mLineHorizontalData.length - 7]) {
@@ -507,6 +509,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_LEFT,
                         pixForBlockX,
                         pixForBlockY);
+                //mpSound1.start();
+                numberShootsRefresh();
                 performDraw();
                 return true;
             } else
@@ -521,6 +525,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_DOWN,
                         pixForBlockX,
                         pixForBlockY);
+                //mpSound1.start();
                 numberShootsRefresh();
                 performDraw();
                 return true;
@@ -538,6 +543,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_UP,
                         pixForBlockX,
                         pixForBlockY);
+                //mpSound1.start();
                 numberShootsRefresh();
                 performDraw();
                 return true;
@@ -552,6 +558,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
             return true;
         } else
             return false;
+        return false;
     }
 
     private void markLikeAtom(int touchX, int touchY) { // mark cell chosed, draw atom here

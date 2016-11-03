@@ -21,12 +21,12 @@ public class GameMap {
     private float mHColor = 131071.65535f; // oh
 
 
-    public GameMap(int n, int m) {
+    public GameMap(int n, int levelMode) {
         mRnd = new Random();
         mLazersLines = new ArrayList<>();
         mSolutionAtomArray = new ArrayList<>();
         mLazersLinesMap = new HashMap<>();
-        mCurrentLevelMap = addBoardersToLevel(generateMap(n - 2, m - 2)); // 2 fo borders
+        mCurrentLevelMap = addBoardersToLevel(generateMap(n - 2, levelMode)); // 2 fo borders
         initSolutionArrayAndAtomNumber();
         mNumberOfAtoms = getNumberOfAtoms();
 
@@ -46,10 +46,10 @@ public class GameMap {
     }
 
     //Sobir's method
-    int[][] generateMap(int n, int m) {
-        int level0[][] = new int[n][m];
+    int[][] generateMap(int n, int levelMode) { // levelMode ignored now
+        int level0[][] = new int[n][n];
         for (int i = 0; i < n; i++) {
-            for (int j = 0; j < m; j++) {
+            for (int j = 0; j < n; j++) {
                 int temp = mRnd.nextInt(9);
                 if (temp == 0) {
                     level0[i][j] = ATOM_CODE;
@@ -58,7 +58,7 @@ public class GameMap {
         }
 
         //todo change for "hard" or "soft" level mode
-        mNumberofShoots = 100 * (n + m) / 5; // hardcode, hackaton INFINITY_VAL implementation, big enough
+        mNumberofShoots = 100 * (n + n) / 5; // hardcode, hackaton INFINITY_VAL implementation, big enough
         return level0;
     }
 

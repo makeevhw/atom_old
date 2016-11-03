@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
 
         final AtomGameView gameView = (AtomGameView) findViewById(R.id.gameview);
         gameView.findTextView();
+        gameView.generateMapWithParam(0);
 
 
         final Button checkButton = (Button) findViewById(R.id.button_check);
