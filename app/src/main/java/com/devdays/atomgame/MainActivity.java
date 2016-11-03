@@ -36,5 +36,21 @@ public class MainActivity extends Activity {
             }
         });
 
+        final Button resetButton = (Button) findViewById(R.id.button_reset);
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gameView.resetGame();
+            }
+        });
+
+        final Button incMapSizeBtn = (Button) findViewById(R.id.button_increase_map_size);
+        incMapSizeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gameView.incMapSize();
+            }
+        });
+
     }
 }

@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,13 +33,13 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private Bitmap bitmapAtomBluePic = null;
     private int atomHaveChosed = 0;
     private boolean mLosed = false;
-    private float cellPixelSize = 75 * getContext().getResources().getDisplayMetrics().density; //150;
+    private float cellPixelSize = 75 * getContext().getResources().getDisplayMetrics().density; //150; // todo redo
     private int mFirstTouchX, mFirstTouchY;
-    private boolean initialized = false;
     private float mBorderLeftX, mBorderRightX, mBorderTopY, mBorderBottomY;
     private boolean mIsHighlighted = false;
     private SoundPlayer player;
     private int mLevelMode;
+    private int mMapCustomSize = 0;
 
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
@@ -48,22 +49,17 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         player = new SoundPlayer(context);
         mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
 
-        /*
-        int n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
-
-        int levelMode = 0;
-        //int n = 0;
-        mGameMap = new GameMap(n, levelMode); // todo redo for n, m, or not, squares are cool
-        mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
-        // количество линий о горизонтали на количество координат для каждой линии
-        mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
-*/
 
     }
 
 
     void generateMapWithParam(int levelMode) { // n parametr deleted
-        int n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
+
+        int n;
+        if (mMapCustomSize == 0)
+            n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
+        else
+            n = mMapCustomSize;
         mGameMap = new GameMap(n, levelMode); // todo redo for n, m, or not, squares are cool
         mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
         // количество линий о горизонтали на количество координат для каждой линии
@@ -71,6 +67,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         //numberShootsRefresh(); // костыль-багофикс
         textViewInit(); // hotfix8
         mLevelMode = levelMode;
+        mMapCustomSize = n;
     }
 
     //////many draw methods
@@ -104,24 +101,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         int offsetFromBorder = 5; //px
 
         if (bitmapAtomBluePic == null) {
-            bitmapAtomBluePic = BitmapFactory.decodeResource(
-                    getResources(),
-                    R.drawable.atome_blue2
-            );
-
-            bitmapAtomBluePic = Bitmap.createScaledBitmap(bitmapAtomBluePic,
-                    pixForBlockX * 9 / 10,
-                    pixForBlockX * 9 / 10,
-                    true);
-
-            //transparent background make white
-            for (int x = 0; x < bitmapAtomBluePic.getWidth(); x++) {
-                for (int y = 0; y < bitmapAtomBluePic.getHeight(); y++) {
-                    if (bitmapAtomBluePic.getPixel(x, y) == Color.BLACK) {
-                        bitmapAtomBluePic.setPixel(x, y, Color.WHITE);
-                    }
-                }
-            }
+            reScaleAtomBitmap();
         }
 
 
@@ -143,7 +123,6 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         //if (!initialized) {
         initVerticalLines(canvas);
         initHorizontalLines(canvas);
-        initialized = true;
         //}
 
         mPaint.setStrokeWidth(1.0f);
@@ -669,10 +648,49 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
     }
 
-    public void restartGame() {
-        mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
-        //generateMapWithParam();
+    public void resetWithNewSize(int n) {
+        if (n > 2) {
+            mMapCustomSize = n;
+            resetGame();
+            reScaleAtomBitmap();
+        } else {
+            Log.e("MyActivity", "mapCustomSize = " + mMapCustomSize);
+        }
     }
 
+    public void resetGame() {
+        mChosenAtomsArray = new ArrayList<>();
+        mIsMoved = false;
+        atomHaveChosed = 0;
+        mLosed = false;
+        mIsHighlighted = false;
+        generateMapWithParam(mLevelMode);
+        performDraw(); // it even regenerate many things
 
+    }
+
+    public void incMapSize() {
+        resetWithNewSize(mMapCustomSize + 1);
+    }
+
+    public void reScaleAtomBitmap() {
+        bitmapAtomBluePic = BitmapFactory.decodeResource(
+                getResources(),
+                R.drawable.atome_blue2
+        );
+
+        bitmapAtomBluePic = Bitmap.createScaledBitmap(bitmapAtomBluePic,
+                pixForBlockX * 9 / 10,
+                pixForBlockX * 9 / 10,
+                true);
+
+        //transparent background make white
+        for (int x = 0; x < bitmapAtomBluePic.getWidth(); x++) {
+            for (int y = 0; y < bitmapAtomBluePic.getHeight(); y++) {
+                if (bitmapAtomBluePic.getPixel(x, y) == Color.BLACK) {
+                    bitmapAtomBluePic.setPixel(x, y, Color.WHITE);
+                }
+            }
+        }
+    }
 }

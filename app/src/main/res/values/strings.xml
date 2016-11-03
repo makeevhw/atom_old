@@ -5,4 +5,6 @@
     <string name="number_of_shoots">Lasers left :</string>
     <string name="number_of_atoms">Atoms left:</string>
     <string name="level"> Level </string>
+    <string name="button_reset">Reset</string>
+    <string name="button_increase_map_size">++size;</string>
 </resources>

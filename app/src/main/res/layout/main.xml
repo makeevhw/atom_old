@@ -85,6 +85,21 @@
                     android:layout_gravity="center_horizontal"
                     android:text="@string/check_button" />
 
+                <Button
+                    android:id="@+id/button_reset"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/button_reset" />
+
+                <Button
+                    android:id="@+id/button_increase_map_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/button_increase_map_size" />
+
+
                 <TextView
                     android:id="@+id/textViewRequest"
                     android:layout_width="wrap_content"
@@ -92,6 +107,8 @@
                     android:layout_gravity="center_horizontal"
                     android:text="Large Text"
                     android:textAppearance="?android:attr/textAppearanceMedium" />
+
+
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
