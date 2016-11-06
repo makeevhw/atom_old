@@ -37,7 +37,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private boolean mLosed = false;
     private boolean mIsHighlighted = false;
     private int mMinMapSize = 6;
-    private int mMaxGameSize = 18;
+    private int mMaxGameSize; // = 18;
 
     private int atomHaveChosedCounter = 0;
     private int mFirstTouchX, mFirstTouchY;
@@ -50,7 +50,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private Bitmap bitmapAtomBluePic = null;
     private float lazerStrokeWidth;
 
-    private float cellPixelSize = 50 * getContext().getResources().getDisplayMetrics().scaledDensity; //todo oh no, oh god no
+    private float cellPixelSize = 45 * getContext().getResources().getDisplayMetrics().scaledDensity; //todo oh no, oh god no
 
     //private final float scale = getContext().getResources().getDisplayMetrics().density;
 
@@ -61,6 +61,9 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mSoundPlayer = new SoundPlayer(context, true); // true by default
         mChosenAtomsArray = new ArrayList<>(); // todo redo
 
+
+        mMaxGameSize = getContext().getResources().getDisplayMetrics().widthPixels / 65; // 65 px per cell - lower bound
+        Log.d("AtomGameView", "AtomGameView: maxSize = " + mMaxGameSize);
         //generateMapWithParam(0);
     }
 
@@ -85,7 +88,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mMapCustomSize = n;
         textViewInit(); // hotfix8
 
-        pixForBlockX = getContext().getResources().getDisplayMetrics().widthPixels / (mGameMap.getWidth()); // fake
+        pixForBlockX = getContext().getResources().getDisplayMetrics().widthPixels / (mGameMap.getWidth());
+        // fake
         //pixForBlockY = getHeight() / (mGameMap.getHeight()); // reset in draw method
 
         // scale by width, squares forever
@@ -93,7 +97,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         // (int) (getLayoutParams().height * ((double) pixForBlockX / pixForBlockY))));
 
         lazerStrokeWidth = pixForBlockX / 8.5f;
-        Log.d("ATOM", "generateMapWithParam: lazerStrokeWidth = " + lazerStrokeWidth);
+        Log.d("ATOM", "generateMapWithParam: pixForBlockX = " + pixForBlockX);
     }
 
     /**
