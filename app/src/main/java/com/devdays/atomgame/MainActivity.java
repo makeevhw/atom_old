@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
 
         gameView = (AtomGameView) findViewById(R.id.gameview);
         gameView.findTextView();
-        gameView.generateMapWithParam(0);
+//        gameView.generateMapWithParam(0);
 
 
         final Button checkButton = (Button) findViewById(R.id.button_check);
@@ -55,6 +55,17 @@ public class MainActivity extends Activity {
                 gameView.incMapSize();
             }
         });
+
+
+        final Button decMapSizeBtn = (Button) findViewById(R.id.button_decrease_map_size);
+        decMapSizeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gameView.mSoundPlayer.playButtonClickSound();
+                gameView.decMapSize();
+            }
+        });
+
 
     }
 

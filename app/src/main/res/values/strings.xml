@@ -7,4 +7,5 @@
     <string name="level"> Level </string>
     <string name="button_reset">Reset</string>
     <string name="button_increase_map_size">++size;</string>
+    <string name="button_decrease_map_siz">--size;</string>
 </resources>

@@ -99,6 +99,13 @@
                     android:layout_gravity="center_horizontal"
                     android:text="@string/button_increase_map_size" />
 
+                <Button
+                    android:id="@+id/button_decrease_map_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/button_decrease_map_siz" />
+
 
                 <TextView
                     android:id="@+id/textViewRequest"

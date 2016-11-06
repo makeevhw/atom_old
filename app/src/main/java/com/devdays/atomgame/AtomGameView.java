@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,6 +33,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private boolean mIsMoved = false;
     private boolean mLosed = false;
     private boolean mIsHighlighted = false;
+    private int mMinMapSize = 6;
+    private int mMaxGameSize = 18;
 
     private int atomHaveChosedCounter = 0;
     private int mFirstTouchX, mFirstTouchY;
@@ -42,8 +45,9 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     private int mLevelMode;
     private int mMapCustomSize = 0; // represent n for map
     private Bitmap bitmapAtomBluePic = null;
+    private float lazerStrokeWidth;
 
-    private float cellPixelSize = 45 * getContext().getResources().getDisplayMetrics().density; //todo oh no, oh god no
+    private float cellPixelSize = 50 * getContext().getResources().getDisplayMetrics().scaledDensity; //todo oh no, oh god no
 
     //private final float scale = getContext().getResources().getDisplayMetrics().density;
 
@@ -54,10 +58,15 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mSoundPlayer = new SoundPlayer(context, true); // true by default
         mChosenAtomsArray = new ArrayList<>(); // todo redo
 
+        //generateMapWithParam(0);
     }
 
+    /**
+     * Generate new map with levelMode map, levelMode for Level class constructor
+     *
+     * @param levelMode from Level class, see static fields like EASY, LEGENDARY, etc
+     */
     void generateMapWithParam(int levelMode) { // n parametr deleted
-
         int n;
         if (mMapCustomSize == 0)
             n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
@@ -71,8 +80,24 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mLevelMode = levelMode;
         mMapCustomSize = n;
         textViewInit(); // hotfix8
+
+        pixForBlockX = getWidth() / (mGameMap.getWidth()); // fake
+        pixForBlockY = getHeight() / (mGameMap.getHeight());
+
+        // scale by width, squares forever
+        setLayoutParams(new LinearLayout.LayoutParams(getLayoutParams().width,
+                (int) (getLayoutParams().height * ((double) pixForBlockX / pixForBlockY))));
+
+        lazerStrokeWidth = pixForBlockX / 8.5f;
+        Log.d("ATOM", "generateMapWithParam: lazerStrokeWidth = " + lazerStrokeWidth);
     }
 
+    /**
+     * generate horizontal lines for grid
+     * use Canvas.drawLines for drawing lines from array
+     *
+     * @param canvas
+     */
     private void initHorizontalLines(Canvas canvas) {
         final int offsetX1 = 0;
         final int offsetY1 = 1;
@@ -90,6 +115,11 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mBorderBottomY = mLineHorizontalData[mLineHorizontalData.length - 7];
     }
 
+    /**
+     * generate vertical lines array fro grid
+     *
+     * @param canvas
+     */
     private void initVerticalLines(Canvas canvas) {
         final int offsetX1 = 0;
         final int offsetY1 = 1;
@@ -167,7 +197,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
      */
     private void drawBorders(Canvas canvas) {
         // рисуем границы
-        mPaint.setStrokeWidth(10.0f);
+        mPaint.setStrokeWidth(5.0f);
         mPaint.setColor(Color.BLACK);
         canvas.drawLine(
                 mLineHorizontalData[4],
@@ -202,19 +232,19 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
      * @param line        contain lazer parameters
      * @param strokeWidth
      */
-    private void drawLazer(Canvas canvas, Line line, float strokeWidth) {
+    private void drawLazer(Canvas canvas, Line line, float strokeWidth, boolean isFat) {
         mPaint.setStrokeWidth(strokeWidth);
         mPaint.setColor(line.color);
 
-        int x1 = line.x1;
-        int y1 = line.y1;
-        int x2 = line.x2;
-        int y2 = line.y2;
+        float x1 = line.x1;
+        float y1 = line.y1;
+        float x2 = line.x2;
+        float y2 = line.y2;
 
-        int deltaX = x2 - x1;
-        int deltaY = y2 - y1;
+        float deltaX = x2 - x1;
+        float deltaY = y2 - y1;
 
-        int cutFactor = 8;
+        float cutFactor = 9.5f;
 
         if (deltaX > 0) { // left to right
             x2 = x2 - Math.abs(deltaX) / cutFactor;
@@ -235,6 +265,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 y2,
                 mPaint);
 
+        float baseFrac = strokeWidth * 2;
+        float frac = Math.min(1, (isFat ? baseFrac / 175 : baseFrac / 150));
         drawArrow(
                 canvas,
                 line.x1,
@@ -242,7 +274,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 line.x2,
                 line.y2,
                 line.color,
-                strokeWidth / 90);
+                frac);
     }
 
     /**
@@ -254,7 +286,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         //mPaint.setStrokeWidth(15.0f); // рисуем ходы
         if (mGameMap.mLazersLines.size() > 0) {
             for (int i = 0; i < mGameMap.mLazersLines.size(); i++) {
-                drawLazer(canvas, mGameMap.mLazersLines.get(i), 15.0f);
+                drawLazer(canvas, mGameMap.mLazersLines.get(i), lazerStrokeWidth, false);
             }
         }
     }
@@ -343,8 +375,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
         draw(canvas);
 
-        drawLazer(canvas, line1, 25.0f);
-        drawLazer(canvas, line2, 25.0f);
+        drawLazer(canvas, line1, lazerStrokeWidth * 1.7f, true);
+        drawLazer(canvas, line2, lazerStrokeWidth * 1.7f, true);
 
 
         getHolder().unlockCanvasAndPost(canvas);
@@ -364,6 +396,9 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
+        if (mGameMap == null) {
+            generateMapWithParam(0); // if nobody created
+        }
         pixForBlockX = canvas.getWidth() / (mGameMap.getWidth());
         pixForBlockY = canvas.getHeight() / (mGameMap.getHeight());
 
@@ -385,6 +420,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
 
+        /*
         pixForBlockX = getWidth() / (mGameMap.getWidth()); // fake
         pixForBlockY = getHeight() / (mGameMap.getHeight());
 
@@ -392,7 +428,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         setLayoutParams(new LinearLayout.LayoutParams(getLayoutParams().width,
                 (int) (getLayoutParams().height * ((double) pixForBlockX / pixForBlockY))));
 
-
+*/
     }
 
     @Override
@@ -753,7 +789,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
      * @param n size of new map, INCLUDES boarders
      */
     public void resetWithNewSize(int n) {
-        mMapCustomSize = Math.max(3, n);
+        mMapCustomSize = Math.min(Math.max(mMinMapSize, n), mMaxGameSize);
         resetGame();
         reScaleAtomBitmap();
     }
