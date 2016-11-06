@@ -9,13 +9,12 @@ import java.util.Random;
 
 public class GameMap {
     final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
-    private final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
-    ArrayList<int[]> mSolutionAtomArray;
+    final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
+    ArrayList<Cell> mSolutionAtomArray;
     int mNumberOfAtoms;
-    ArrayList<Line> mLazersLines; // arrlist of all moves like {x1, y1, x2, y2, color}, for canvas redrawing
+    ArrayList<Line> mLazersLines;
     int[][] mCurrentLevelMap;
     int mLasersCount = 0;
-    //ArrayList<Hintsegment> hs = new ArrayList<>();
     HashMap<Cell, Line> mLazersLinesMap;
     private Random mRnd;
     private float mHColor = 131071.65535f; // oh
@@ -40,7 +39,7 @@ public class GameMap {
         for (int y = 0; y < getHeight(); y++) {
             for (int x = 0; x < getWidth(); x++) {
                 if (mCurrentLevelMap[y][x] == ATOM_CODE) {
-                    mSolutionAtomArray.add(new int[]{x, y}); // {x, y}//bad code, repair
+                    mSolutionAtomArray.add(new Cell(x, y)); // {x, y}//bad code, repair
                     mNumberOfAtoms++;
                 }
             }
@@ -148,7 +147,7 @@ public class GameMap {
         }
 
 
-        Line lazerInputLine = AddLineToDraws(cellX, cellY,
+        Line lazerInputLine = createLazerLine(cellX, cellY,
                 pixelOffsetX,
                 pixelOffsetY,
                 laserDrection,
@@ -156,8 +155,8 @@ public class GameMap {
                 pixForBlockX,
                 pixForBlockY
         );
-        Cell inputCell = new Cell(cellX, cellY, false);
-        //inputCell.setIsOutpuLine(false);
+        Cell inputCell = new Cell(cellX, cellY);
+        inputCell.setIsOutpuLine(false);
 
 
         do { // трассируем путь
@@ -245,7 +244,7 @@ public class GameMap {
         }
 
         // добавить в arraylist для отрисовки КОНЕЦ луча
-        Line lazerOutputLine = AddLineToDraws(
+        Line lazerOutputLine = createLazerLine(
                 cellX,
                 cellY,
                 pixelOffsetX,
@@ -260,8 +259,8 @@ public class GameMap {
         lazerInputLine.setPair(lazerOutputLine);
         lazerOutputLine.setPair(lazerInputLine);
 
-        Cell outputCell = new Cell(cellX, cellY, true);
-        //outputCell.setIsOutpuLine(true);
+        Cell outputCell = new Cell(cellX, cellY);
+        outputCell.setIsOutpuLine(true);
 
         mLazersLinesMap.put(inputCell, lazerInputLine);
         mLazersLinesMap.put(outputCell, lazerOutputLine);
@@ -272,7 +271,7 @@ public class GameMap {
 
     private int nextColor() {
         //use golden ratio
-        float val = 32767.16383f;
+        float val = 199.0f;
 
         mHColor *= val;
         mHColor %= 359;
@@ -286,13 +285,13 @@ public class GameMap {
     }
 
     //return linee, cause arcitecutre of the app is awfull
-    private Line AddLineToDraws(int cellX, int cellY,
-                                int pixelOffsetX,
-                                int pixelOffsetY,
-                                int direction,
-                                int currentColor,
-                                int pixForBlockX,
-                                int pixForBlockY
+    private Line createLazerLine(int cellX, int cellY,
+                                 int pixelOffsetX,
+                                 int pixelOffsetY,
+                                 int direction,
+                                 int currentColor,
+                                 int pixForBlockX,
+                                 int pixForBlockY
     ) {
         switch (direction) { // вход лазера
             case DIRECTION_RIGHT:

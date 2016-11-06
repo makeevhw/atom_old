@@ -13,6 +13,7 @@ public class Level {
     private static final int EASY = 0;
     private static final int EPIC = 1;
     private static final int LEGENDARY = 2;
+    static String levelName[] = {"EASY", "EPIC", "LEGENDARY"};
     private Atom[] atoms;
     private int atoms_count;
     private int[][] matrix;

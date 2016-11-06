@@ -13,6 +13,8 @@ public class MainActivity extends Activity {
      * Called when the activity is first created.
      */
 
+    private AtomGameView gameView;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,9 +25,9 @@ public class MainActivity extends Activity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);     //  Fixed Portrait orientation
         setContentView(R.layout.main);
 
-        final AtomGameView gameView = (AtomGameView) findViewById(R.id.gameview);
+        gameView = (AtomGameView) findViewById(R.id.gameview);
         gameView.findTextView();
-        gameView.generateMapWithParam(2);
+        gameView.generateMapWithParam(0);
 
 
         final Button checkButton = (Button) findViewById(R.id.button_check);
@@ -40,6 +42,7 @@ public class MainActivity extends Activity {
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                gameView.mSoundPlayer.playButtonClickSound();
                 gameView.resetGame();
             }
         });
@@ -48,9 +51,17 @@ public class MainActivity extends Activity {
         incMapSizeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                gameView.mSoundPlayer.playButtonClickSound();
                 gameView.incMapSize();
             }
         });
 
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        gameView.mSoundPlayer.destroy();
+    }
+
 }

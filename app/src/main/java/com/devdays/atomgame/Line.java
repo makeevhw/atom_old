@@ -2,10 +2,10 @@ package com.devdays.atomgame;
 
 //container
 public class Line {
-    final int x1, x2, y1, y2;
+    int x1, x2, y1, y2;
     boolean isOutput;
     int color;
-    Line pair;
+    Line pair; /// pair for lazer-line
 
     public Line(int x1, int y1, int x2, int y2, int color, Line pair) {
         this.x1 = x1;

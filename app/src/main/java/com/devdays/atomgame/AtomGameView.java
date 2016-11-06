@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -17,41 +16,45 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+/**
+ * Something goes wrong, and this class become inexcusably enormous and wry
+ */
 
 public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback {
 
-    protected final int ATOM_CODE = 1; //, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;
-    //private final float scale = getContext().getResources().getDisplayMetrics().density;
-    protected int pixForBlockX, pixForBlockY;
     protected TextView textViewShoots, textViewAtoms, textViewRequest, textViewHeader;
-    protected ArrayList<int[]> mChosenAtomsArray; // {cellX, cellY }
-    private int mCurrentLevelNumber = 0;
+    protected ArrayList<Cell> mChosenAtomsArray; // {cellX, cellY }
+    SoundPlayer mSoundPlayer;
     private GameMap mGameMap;
     private Paint mPaint;
-    private float[] mLineHorizontalData, mLineVerticalData; //todo redo with line class
-    private boolean mIsMoved = false;
-    private Bitmap bitmapAtomBluePic = null;
-    private int atomHaveChosed = 0;
-    private boolean mLosed = false;
-    private float cellPixelSize = 75 * getContext().getResources().getDisplayMetrics().density; //150; // todo redo
-    private int mFirstTouchX, mFirstTouchY;
-    private float mBorderLeftX, mBorderRightX, mBorderTopY, mBorderBottomY;
-    private boolean mIsHighlighted = false;
-    private SoundPlayer player;
-    private int mLevelMode;
-    private int mMapCustomSize = 0;
+    private float[] mLineHorizontalData, mLineVerticalData; //need for drawing
 
+    private boolean mIsMoved = false;
+    private boolean mLosed = false;
+    private boolean mIsHighlighted = false;
+
+    private int atomHaveChosedCounter = 0;
+    private int mFirstTouchX, mFirstTouchY;
+    private float mBorderLeftX, mBorderRightX;
+    private float mBorderTopY, mBorderBottomY;
+    private int pixForBlockX, pixForBlockY;
+
+    private int mLevelMode;
+    private int mMapCustomSize = 0; // represent n for map
+    private Bitmap bitmapAtomBluePic = null;
+
+    private float cellPixelSize = 45 * getContext().getResources().getDisplayMetrics().density; //todo oh no, oh god no
+
+    //private final float scale = getContext().getResources().getDisplayMetrics().density;
 
     public AtomGameView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
         getHolder().addCallback(this); // for what?
         mPaint = new Paint();
-        player = new SoundPlayer(context);
-        mChosenAtomsArray = new ArrayList<int[]>(); // todo redo
-
+        mSoundPlayer = new SoundPlayer(context, true); // true by default
+        mChosenAtomsArray = new ArrayList<>(); // todo redo
 
     }
-
 
     void generateMapWithParam(int levelMode) { // n parametr deleted
 
@@ -64,77 +67,10 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
         // количество линий о горизонтали на количество координат для каждой линии
         mLineVerticalData = new float[(mGameMap.getWidth() + 1) * 4]; // 4 is max lines for each two cells
-        //numberShootsRefresh(); // костыль-багофикс
-        textViewInit(); // hotfix8
+
         mLevelMode = levelMode;
         mMapCustomSize = n;
-    }
-
-    //////many draw methods
-    void drawChoses(Canvas canvas) {
-        // рисуем кресты/atoms
-
-        /*
-        mPaint.setStrokeWidth(9.0f);
-        mPaint.setColor(0xff669900);
-
-
-        //todo redo for drawlines, faster
-        for (int i = 0; i < mChosenAtomsArray.size(); i++) {
-            canvas.drawLine(
-                    mChosenAtomsArray.get(i)[2],
-                    mChosenAtomsArray.get(i)[3],
-                    mChosenAtomsArray.get(i)[4],
-                    mChosenAtomsArray.get(i)[5],
-                    mPaint
-                    );
-            canvas.drawLine(
-                    mChosenAtomsArray.get(i)[6],
-                    mChosenAtomsArray.get(i)[7],
-                    mChosenAtomsArray.get(i)[8],
-                    mChosenAtomsArray.get(i)[9],
-                    mPaint
-                    );
-        }
-        */
-
-        int offsetFromBorder = 5; //px
-
-        if (bitmapAtomBluePic == null) {
-            reScaleAtomBitmap();
-        }
-
-
-        for (int i = 0; i < mChosenAtomsArray.size(); i++) {
-            drawCellPicture(
-                    canvas,
-                    bitmapAtomBluePic,
-                    mChosenAtomsArray.get(i)[0] * pixForBlockX + pixForBlockX / 20,
-                    mChosenAtomsArray.get(i)[1] * pixForBlockY + pixForBlockY / 20
-            );
-        }
-    }
-
-    private void drawGrid(Canvas canvas) {
-
-        //performDraw blocks - many lines
-        //get size for cell
-
-        //if (!initialized) {
-        initVerticalLines(canvas);
-        initHorizontalLines(canvas);
-        //}
-
-        mPaint.setStrokeWidth(1.0f);
-        mPaint.setColor(Color.BLUE);
-        canvas.drawLines(mLineHorizontalData, mPaint); // рисуем сетку по горизонтали
-        //todo redo for cell blocks
-
-        // рисуем сетку по вертикали
-
-        mPaint.setStrokeWidth(1.0f);
-        mPaint.setColor(Color.BLUE);
-        canvas.drawLines(mLineVerticalData, mPaint);
+        textViewInit(); // hotfix8
     }
 
     private void initHorizontalLines(Canvas canvas) {
@@ -172,6 +108,63 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
     }
 
+
+    //////Many draw methods
+
+    /**
+     * draw all chose atoms on the grid
+     *
+     * @param canvas
+     */
+    void drawChoses(Canvas canvas) {
+        int borderOffsetDivisor = 20;
+
+        if (bitmapAtomBluePic == null) { // if just initialized
+            reScaleAtomBitmap();
+        }
+
+
+        for (int i = 0; i < mChosenAtomsArray.size(); i++) {
+            canvas.drawBitmap(bitmapAtomBluePic,
+                    mChosenAtomsArray.get(i).x * pixForBlockX + pixForBlockX / borderOffsetDivisor,
+                    mChosenAtomsArray.get(i).y * pixForBlockY + pixForBlockY / borderOffsetDivisor,
+                    null);
+        }
+    }
+
+    /**
+     * Рисует сеточку, на которой мы отмечаем атомы
+     *
+     * @param canvas
+     */
+    private void drawGrid(Canvas canvas) {
+
+        //performDraw blocks - many lines
+        //get size for cell
+
+        //if (!initialized) {
+        initVerticalLines(canvas);
+        initHorizontalLines(canvas);
+        //}
+
+        mPaint.setStrokeWidth(1.0f);
+        mPaint.setColor(Color.BLUE);
+        canvas.drawLines(mLineHorizontalData, mPaint); // рисуем сетку по горизонтали
+        //todo redo for cell blocks
+
+        // рисуем сетку по вертикали
+
+        mPaint.setStrokeWidth(1.0f);
+        mPaint.setColor(Color.BLUE);
+        canvas.drawLines(mLineVerticalData, mPaint);
+    }
+
+    /**
+     * Draw 4 lines
+     * represents boarders for gameMap
+     *
+     * @param canvas
+     */
     private void drawBorders(Canvas canvas) {
         // рисуем границы
         mPaint.setStrokeWidth(10.0f);
@@ -202,7 +195,13 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 , mPaint);
     }
 
-
+    /**
+     * Draw single lazer, calls from drawLazers
+     *
+     * @param canvas
+     * @param line        contain lazer parameters
+     * @param strokeWidth
+     */
     private void drawLazer(Canvas canvas, Line line, float strokeWidth) {
         mPaint.setStrokeWidth(strokeWidth);
         mPaint.setColor(line.color);
@@ -215,7 +214,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         int deltaX = x2 - x1;
         int deltaY = y2 - y1;
 
-        int cutFactor = 10;
+        int cutFactor = 8;
+
         if (deltaX > 0) { // left to right
             x2 = x2 - Math.abs(deltaX) / cutFactor;
         } else if (deltaX < 0) { // right to left
@@ -242,9 +242,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 line.x2,
                 line.y2,
                 line.color,
-                strokeWidth / 100);
+                strokeWidth / 90);
     }
 
+    /**
+     * Draw all lazers on the canvas, calls for redrawing all surfaceView
+     *
+     * @param canvas
+     */
     private void drawLazers(Canvas canvas) {
         //mPaint.setStrokeWidth(15.0f); // рисуем ходы
         if (mGameMap.mLazersLines.size() > 0) {
@@ -255,13 +260,16 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     }
 
     /**
+     * Magic method from stakoverflow
+     * Draw arrow like a god
+     *
      * @param canvas
      * @param x0
      * @param y0
      * @param x1
      * @param y1
      * @param arrowColor
-     * @param frac       frac : 0 < frac < 1 - init size of arrow head
+     * @param frac       : 0 < frac < 1 - init size of arrow head
      */
     private void drawArrow(Canvas canvas, float x0, float y0, float x1, float y1, int arrowColor,
                            float frac) {
@@ -299,6 +307,11 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         canvas.drawPath(path, mPaint);
     }
 
+    /**
+     * Draw red circles, which represents answer
+     *
+     * @param canvas
+     */
     private void drawSolution(Canvas canvas) {
         // рисуем оригинальные кресты
 
@@ -312,8 +325,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         for (int i = 0; i < mGameMap.mSolutionAtomArray.size(); i++) {
 
             float radius = Math.min(pixForBlockX / 2 - 5, pixForBlockY / 2 - 5);
-            float x = pixForBlockX * mGameMap.mSolutionAtomArray.get(i)[0] + pixForBlockX / 2;
-            float y = pixForBlockY * mGameMap.mSolutionAtomArray.get(i)[1] + pixForBlockY / 2;
+            float x = pixForBlockX * mGameMap.mSolutionAtomArray.get(i).x + pixForBlockX / 2;
+            float y = pixForBlockY * mGameMap.mSolutionAtomArray.get(i).y + pixForBlockY / 2;
 
 
             canvas.drawCircle(
@@ -322,17 +335,6 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                     radius, // radius
                     mPaint);
         }
-    }
-
-    void drawCellPicture(Canvas canvas, Bitmap bitmap, float left, float top) {
-
-        canvas.drawBitmap(bitmap, left, top, null);
-    }
-
-    private void performDraw() {
-        Canvas canvas = getHolder().lockCanvas();
-        draw(canvas);
-        getHolder().unlockCanvasAndPost(canvas);
     }
 
     private void drawFatLines(Line line1, Line line2) {
@@ -347,6 +349,16 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
         getHolder().unlockCanvasAndPost(canvas);
     }
+
+    /**
+     * Redraw the whole canvas
+     */
+    private void performDraw() {
+        Canvas canvas = getHolder().lockCanvas();
+        draw(canvas);
+        getHolder().unlockCanvasAndPost(canvas);
+    }
+
 
     @Override
     public void draw(Canvas canvas) {
@@ -386,10 +398,12 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         performDraw();
+        //mSoundPlayer.init();
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        //mSoundPlayer.destroy();
     }
 
     @Override
@@ -408,6 +422,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                 return mIsMoved;
             case MotionEvent.ACTION_UP:
                 if (mIsHighlighted) {
+                    mSoundPlayer.stopHighlightedSound();
                     performDraw();
                     mIsHighlighted = false;
                     return true;
@@ -418,16 +433,25 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         Math.abs(mFirstTouchY - mTouchY) > 2 * pixForBlockY / 3)
                     return false; // ignore moving
                 mIsMoved = false; // remove this filed?
-                tryLazerAttack(mTouchX, mTouchY);
+                tryLazerOrChose(mTouchX, mTouchY);
         }
         return false;
     }
 
+    /**
+     * Trying to highlight lazer line and its pair if they exist
+     * Determine cell index from params x and y
+     * Plays sounds
+     *
+     * @param x x-coordinate of touch event
+     * @param y y-coordinate of touch event
+     * @return
+     */
     private boolean tryHighlighting(int x, int y) {
         int cellX = Math.min(x / (pixForBlockX /* + 1 */), getWidth() - 1); // бесподобный костыль
         int cellY = Math.min(y / (pixForBlockY /* + 1 */), getHeight() - 1);
         Line line = null;
-        Cell cl = new Cell(cellX, cellY, false); // false by default
+        Cell cl = new Cell(cellX, cellY);
 
         //get lazer, highlight both
         if (y > mBorderTopY && y < mBorderBottomY) { // LEFT OR RIGHT
@@ -458,7 +482,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         line = mGameMap.mLazersLinesMap.get(cl);
 
         if (line != null) { // достать пару, отрисовать с 2х шириной линии
-            // сохранить линни для, хотя не, перерисуем всё
+            mSoundPlayer.playHighlightedSound();
             drawFatLines(line, line.pair);
             mIsHighlighted = true;
             return true;
@@ -466,7 +490,18 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         return false;
     }
 
-    private boolean tryLazerAttack(int mTouchX, int mTouchY) {
+
+    /**
+     * It try to draw lazers, if we touch to lazer cells
+     * (and play sound)
+     * Or mark cell as atom if it is not boarder cell
+     * It also call markLikeAtomMethod.
+     *
+     * @param mTouchX x-coordinate of touch event
+     * @param mTouchY y-coordinate of touch event
+     * @return
+     */
+    private boolean tryLazerOrChose(int mTouchX, int mTouchY) {
         boolean attacked = false;
 
         if (mTouchX < mLineVerticalData[4] && mTouchY > mLineHorizontalData[5]
@@ -478,10 +513,13 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_RIGHT,
                         pixForBlockX,
                         pixForBlockY);
-                player.playLaserSound();
+                mSoundPlayer.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 //attacked = true; // todo refactor this method completely
+            } else {
+                mSoundPlayer.playSoundError();
+                return false;
             }
         } else if (mTouchX > mLineVerticalData[mLineVerticalData.length - 8] &&
                 mTouchY > mLineHorizontalData[5] // RIGHT
@@ -493,12 +531,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_LEFT,
                         pixForBlockX,
                         pixForBlockY);
-                player.playLaserSound();
+                mSoundPlayer.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 return true;
-            } else
+            } else {
+                mSoundPlayer.playSoundError();
                 return false;
+            }
         } else if (mTouchX > mLineVerticalData[4]
                 && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // TOP
                 && mTouchY < mLineHorizontalData[5]) {
@@ -509,12 +549,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_DOWN,
                         pixForBlockX,
                         pixForBlockY);
-                player.playLaserSound();
+                mSoundPlayer.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 return true;
-            } else
+            } else {
+                mSoundPlayer.playSoundError();
                 return false;
+            }
         } else if (
                 mTouchX > mLineVerticalData[4]
                         && mTouchX < mLineVerticalData[mLineVerticalData.length - 8] // BOTTOM
@@ -527,12 +569,14 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
                         mGameMap.DIRECTION_UP,
                         pixForBlockX,
                         pixForBlockY);
-                player.playLaserSound();
+                mSoundPlayer.playLaserSound();
                 numberShootsRefresh();
                 performDraw();
                 return true;
-            } else
+            } else {
+                mSoundPlayer.playSoundError();
                 return false;
+            }
         } else if (mTouchX > mLineVerticalData[4] &&
                 mTouchX < mLineVerticalData[mLineVerticalData.length - 8] &&  // FIELD
                 mTouchY > mLineHorizontalData[5] &&
@@ -545,41 +589,54 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         return false;
     }
 
+    /**
+     * Draw or redraw atom bitmap on the field,
+     * determine cell index from params.
+     * Calls from tryLazerOrChose,
+     * yeh, bad design...
+     *
+     * @param touchX x-coordinate of touch event
+     * @param touchY y-coordinate of touch event
+     */
     private void markLikeAtom(int touchX, int touchY) { // mark cell chosed, draw atom here
         int cellX = touchX / (pixForBlockX + 1); // начальные номера ячеек
         int cellY = touchY / (pixForBlockY + 1);
         int numberToDechoose = 0;
         boolean isAlreadyMarked = false;
         for (int i = 0; i < mChosenAtomsArray.size(); i++) {
-            if ((mChosenAtomsArray.get(i))[0] == cellX &&
-                    (mChosenAtomsArray.get(i))[1] == cellY) {
+            if (mChosenAtomsArray.get(i).x == cellX &&
+                    mChosenAtomsArray.get(i).y == cellY) {
                 isAlreadyMarked = true;
                 numberToDechoose = i;
             }
         }
 
         if (!isAlreadyMarked) { // CHOOSE
-            if (atomHaveChosed < mGameMap.mNumberOfAtoms) {
-                int[] arr = new int[2]; // добавляем номера ячеек в arraylist
-                arr[0] = cellX;
-                arr[1] = cellY;
-
-                mChosenAtomsArray.add(arr);
-                atomHaveChosed++;
+            if (atomHaveChosedCounter < mGameMap.mNumberOfAtoms) {
+                mSoundPlayer.playChoseSound();
+                mChosenAtomsArray.add(new Cell(cellX, cellY));
+                atomHaveChosedCounter++;
 
                 textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " +
-                        (mGameMap.mNumberOfAtoms - atomHaveChosed) + " ");
+                        (mGameMap.mNumberOfAtoms - atomHaveChosedCounter) + " ");
                 textViewAtoms.invalidate();
+            } else { // not enough
+                mSoundPlayer.playSoundError();
             }
         } else { // DECHOOSE update text
+            mSoundPlayer.playDechoseSound();
             mChosenAtomsArray.remove(numberToDechoose);
-            atomHaveChosed--;
+            atomHaveChosedCounter--;
             textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " +
-                    (mGameMap.mNumberOfAtoms - atomHaveChosed) + " ");
+                    (mGameMap.mNumberOfAtoms - atomHaveChosedCounter) + " ");
             textViewAtoms.invalidate();
         }
     }
 
+    /**
+     * Updates lazer count viewing textView
+     * Color it RED after lasercount achieving 0.
+     */
     private void numberShootsRefresh() {
         if (mGameMap != null) {
             textViewShoots = (TextView) (((MainActivity) this.getContext()).findViewById(R.id.textView1));
@@ -592,9 +649,10 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         }
     }
 
-    //print text, here
+    /**
+     * Find textViews and assign them default value.
+     */
     public void findTextView() {
-
         textViewShoots = (TextView) (((MainActivity) this.getContext()).findViewById(R.id.textView1));
         textViewShoots.setText(getResources().getString(R.string.number_of_shoots) + " " + 0 + " ");
 
@@ -609,70 +667,21 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
     }
 
+    /**
+     * Assign values to textView, usefull in some cases
+     */
     private void textViewInit() {
-
+        textViewShoots.setTextColor(Color.BLACK);
         textViewShoots.setText(getResources().getString(R.string.number_of_shoots) + " " + mGameMap.mLasersCount + " ");
         textViewAtoms.setText(getResources().getString(R.string.number_of_atoms) + " " + mGameMap.mNumberOfAtoms + " ");
         textViewRequest.setText(" ");
-        textViewHeader.setText(getResources().getString(R.string.level) + " " + mCurrentLevelNumber);
+        textViewHeader.setText(getResources().getString(R.string.level) + " " +
+                Level.levelName[mLevelMode]);
     }
 
-    public void checkResults() {
-        if (atomHaveChosed < mGameMap.mNumberOfAtoms) {
-            textViewRequest.setTextColor(Color.RED);
-            textViewRequest.setText("Not all atoms have been choosen. " + (mGameMap.mNumberOfAtoms - atomHaveChosed) +
-                    " atoms left.");
-        } else {
-            boolean isCorrect = true;
-
-            int xIndex = 0, yIndex = 1;
-            for (int i = 0; i < mChosenAtomsArray.size(); i++) {
-                if (
-                        mGameMap.mCurrentLevelMap[mChosenAtomsArray.get(i)[yIndex]][mChosenAtomsArray.get(i)[xIndex]] != ATOM_CODE) {
-                    isCorrect = false;
-                    break;
-                }
-            }
-
-            if (isCorrect) {
-                textViewRequest.setTextColor(Color.GREEN);
-                textViewRequest.setText("All atoms collected. EPIC WIN !");
-            } else {
-                textViewRequest.setTextColor(Color.RED);
-                textViewRequest.setText("There are mistakes. EPIC FAIL !");
-                mLosed = true;
-                performDraw();
-            }
-
-        }
-
-    }
-
-    public void resetWithNewSize(int n) {
-        if (n > 2) {
-            mMapCustomSize = n;
-            resetGame();
-            reScaleAtomBitmap();
-        } else {
-            Log.e("MyActivity", "mapCustomSize = " + mMapCustomSize);
-        }
-    }
-
-    public void resetGame() {
-        mChosenAtomsArray = new ArrayList<>();
-        mIsMoved = false;
-        atomHaveChosed = 0;
-        mLosed = false;
-        mIsHighlighted = false;
-        generateMapWithParam(mLevelMode);
-        performDraw(); // it even regenerate many things
-
-    }
-
-    public void incMapSize() {
-        resetWithNewSize(mMapCustomSize + 1);
-    }
-
+    /**
+     * Rescale bitmap for atom image, calls after resizing map.
+     */
     public void reScaleAtomBitmap() {
         bitmapAtomBluePic = BitmapFactory.decodeResource(
                 getResources(),
@@ -693,4 +702,89 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
             }
         }
     }
+
+    // something like api for buttons outside, Vadim look here
+
+    /**
+     * Calls from button's "Check results" onClick listener, update tex fields in demo.
+     * May be useful, but should be replaced
+     */
+    public void checkResults() {
+        if (atomHaveChosedCounter < mGameMap.mNumberOfAtoms) {
+            mSoundPlayer.playSoundError();
+            textViewRequest.setTextColor(Color.RED);
+            textViewRequest.setText("Not all atoms have been choosen. " +
+                    (mGameMap.mNumberOfAtoms - atomHaveChosedCounter) +
+                    " atoms left.");
+        } else {
+            boolean isCorrect = true;
+
+
+            for (int i = 0; i < mChosenAtomsArray.size(); i++) {
+                int yIndex = mChosenAtomsArray.get(i).y;
+                int xIndex = mChosenAtomsArray.get(i).x;
+                if (
+                        mGameMap.mCurrentLevelMap[yIndex][xIndex] != mGameMap.ATOM_CODE) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+
+            if (isCorrect) {
+                mSoundPlayer.playSoundWin();
+                textViewRequest.setTextColor(Color.GREEN);
+                textViewRequest.setText("All atoms collected. EPIC WIN !");
+
+            } else {
+                mSoundPlayer.playSoundLose();
+                textViewRequest.setTextColor(Color.RED);
+                textViewRequest.setText("There are mistakes. EPIC FAIL !");
+                mLosed = true;
+                performDraw();
+            }
+
+        }
+
+    }
+
+    /**
+     * Reload game with new size n
+     *
+     * @param n size of new map, INCLUDES boarders
+     */
+    public void resetWithNewSize(int n) {
+        mMapCustomSize = Math.max(3, n);
+        resetGame();
+        reScaleAtomBitmap();
+    }
+
+    /**
+     * Simply reload game with the same size
+     */
+    public void resetGame() {
+        mChosenAtomsArray = new ArrayList<>();
+        mIsMoved = false;
+        atomHaveChosedCounter = 0;
+        mLosed = false;
+        mIsHighlighted = false;
+        generateMapWithParam(mLevelMode);
+        performDraw(); // it even regenerate many things
+
+    }
+
+    /**
+     * Reload game with ++size
+     */
+    public void incMapSize() {
+        resetWithNewSize(mMapCustomSize + 1);
+    }
+
+    /**
+     * Reload game with --size
+     */
+    public void decMapSize() {
+        int newMapSize = Math.max(3, mMapCustomSize - 1);
+        resetWithNewSize(newMapSize);
+    }
+
 }
