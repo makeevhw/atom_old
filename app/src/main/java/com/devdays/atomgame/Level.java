@@ -7,7 +7,9 @@ import java.util.Random;
  * Created by Yorov on 03.11.2016.
  */
 
-
+/**
+ * Level-generator class
+ */
 public class Level {
 
     private static final int EASY = 0;

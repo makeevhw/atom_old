@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-
+/**
+ * Class for manipulating game data and calculating all we need for game.
+ * <p>
+ * Helper class for AtomGameView, they do all stuff about game drawing and calculating
+ */
 public class GameMap {
     final int DIRECTION_UP = 0, DIRECTION_DOWN = 1, DIRECTION_RIGHT = 2, DIRECTION_LEFT = 3;
     final int ATOM_CODE = 1, FREE_SPACE = 0, MOVE_IN = 2, MOVE_OUT = 3, DOUBLE_LASERS = 4;

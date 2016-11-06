@@ -18,6 +18,9 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 /**
+ * Main Game class, it draws something, update data and call methods
+ * from worker class "GameMap"
+ * <p>
  * Something goes wrong, and this class become inexcusably enormous and wry
  */
 
@@ -85,8 +88,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         pixForBlockY = getHeight() / (mGameMap.getHeight());
 
         // scale by width, squares forever
-        setLayoutParams(new LinearLayout.LayoutParams(getLayoutParams().width,
-                (int) (getLayoutParams().height * ((double) pixForBlockX / pixForBlockY))));
+        //setLayoutParams(new LinearLayout.LayoutParams(getLayoutParams().width,
+        // (int) (getLayoutParams().height * ((double) pixForBlockX / pixForBlockY))));
 
         lazerStrokeWidth = pixForBlockX / 8.5f;
         Log.d("ATOM", "generateMapWithParam: lazerStrokeWidth = " + lazerStrokeWidth);
@@ -419,16 +422,19 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-
-        /*
+        if (mGameMap == null) {
+            generateMapWithParam(0);
+        }
         pixForBlockX = getWidth() / (mGameMap.getWidth()); // fake
+
         pixForBlockY = getHeight() / (mGameMap.getHeight());
+
 
         // сейчас всегда масштабируем по ширине, хотим что-то типа квадрата, квадраты тру // WHY SO SERIOUS?
         setLayoutParams(new LinearLayout.LayoutParams(getLayoutParams().width,
                 (int) (getLayoutParams().height * ((double) pixForBlockX / pixForBlockY))));
 
-*/
+
     }
 
     @Override

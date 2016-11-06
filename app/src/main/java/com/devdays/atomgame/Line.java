@@ -1,6 +1,8 @@
 package com.devdays.atomgame;
 
-//container
+/**
+ * Container, contain many line's properties
+ */
 public class Line {
     int x1, x2, y1, y2;
     boolean isOutput;
@@ -27,6 +29,11 @@ public class Line {
         this.isOutput = false;
     }
 
+    /**
+     * Set pair lazer-line (inp or outp)
+     *
+     * @param pair Pair lazer-line
+     */
     public void setPair(Line pair) {
         this.pair = pair;
     }

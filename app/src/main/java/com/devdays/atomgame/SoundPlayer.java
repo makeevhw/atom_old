@@ -5,8 +5,12 @@ import android.media.MediaPlayer;
 
 import java.util.ArrayList;
 
+/**
+ * Just player class, can play some hardcoded game sounds
+ */
 public class SoundPlayer {
 
+    // containers
     private MediaPlayer[] mLazerSoundPlayers;
     private ArrayList<MediaPlayer> mChoseAtomPlayerArr;
     private ArrayList<MediaPlayer> mDechoseAtomPlayerArr;
@@ -16,6 +20,9 @@ public class SoundPlayer {
     private MediaPlayer mWinPlayer;
     private MediaPlayer mErrorPlayer;
 
+    /**
+     * U can use this fields for preseting diffeerent game sounds
+     */
     private int mChoseSoundID = R.raw.button_11; // was _3 , but changed
     private int mDechoseSoundID = R.raw.button_11;
     private int mHighlightSoudID = R.raw.lightsaberpulse; // may be should change
@@ -71,7 +78,7 @@ public class SoundPlayer {
     }
 
     /**
-     * call for releasing resourses
+     * !! !! call it for releasing resourses
      */
     public void destroy() {
         for (int i = 0; i < mLazerSoundPlayers.length; i++) {
@@ -176,10 +183,16 @@ public class SoundPlayer {
             mErrorPlayer.start();
     }
 
+
     public boolean isSoundEnabled() {
         return isSoundEnabled;
     }
 
+    /**
+     * U can turn on/off sounds using this
+     *
+     * @param soundEnabled true if u want to enable sound, otherwise false
+     */
     public void setSoundEnabled(boolean soundEnabled) {
         isSoundEnabled = soundEnabled;
     }
