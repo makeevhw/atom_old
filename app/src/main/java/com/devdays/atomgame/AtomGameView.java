@@ -75,6 +75,7 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
             n = (int) (getContext().getResources().getDisplayMetrics().widthPixels / cellPixelSize);
         else
             n = mMapCustomSize;
+
         mGameMap = new GameMap(n, levelMode); // todo redo for n, m, or not, squares are cool
         mLineHorizontalData = new float[(mGameMap.getHeight() + 1) * 4];
         // количество линий о горизонтали на количество координат для каждой линии
@@ -84,8 +85,8 @@ public class AtomGameView extends SurfaceView implements SurfaceHolder.Callback 
         mMapCustomSize = n;
         textViewInit(); // hotfix8
 
-        pixForBlockX = getWidth() / (mGameMap.getWidth()); // fake
-        pixForBlockY = getHeight() / (mGameMap.getHeight());
+        pixForBlockX = getContext().getResources().getDisplayMetrics().widthPixels / (mGameMap.getWidth()); // fake
+        //pixForBlockY = getHeight() / (mGameMap.getHeight()); // reset in draw method
 
         // scale by width, squares forever
         //setLayoutParams(new LinearLayout.LayoutParams(getLayoutParams().width,
